@@ -44,13 +44,15 @@ export interface ObjectActions {
 export interface DatabaseObject {
   "@context"?: string;
   "@id"?: string;
-  "@type": Array<string>;
+  "@type": string[];
   accession?: string;
-  actions?: Array<ObjectActions>;
+  actions?: ObjectActions[];
+  aliases?: string[];
   audit?: Audits;
   creation_timestamp?: string;
   release_timestamp?: string;
   status?: string;
+  summary?: string;
   uuid?: string;
   [key: string]: unknown;
 }
