@@ -1,7 +1,9 @@
 import getConfig from "next/config";
 /* istanbul ignore file */
 
-const { serverRuntimeConfig, publicRuntimeConfig } = getConfig();
+import nextConfig from "../../next.config.mjs";
+
+const { serverRuntimeConfig, publicRuntimeConfig } = nextConfig;
 
 /**
  * igvf-ui NextJS server URL
