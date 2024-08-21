@@ -3,10 +3,9 @@
  */
 
 // lib
-import { HTTP_STATUS_CODE } from "./fetch-request";
+import { type ErrorObject, HttpStatusCode } from "./fetch-request";
 // types
-import { ErrorObject } from "./fetch-request.d";
-import { ServerSideProps } from "../globals.d";
+import type { ServerSideProps } from "../globals.d";
 
 /**
  * Log the error to the console with a timestamp.
@@ -26,7 +25,7 @@ export function logError(statusCode: string | number, title: string): void {
  */
 export function errorObjectToProps(errorObject: ErrorObject): ServerSideProps {
   // NextJS handles 404 separately.
-  if (errorObject.code === HTTP_STATUS_CODE.NOT_FOUND) {
+  if (errorObject.code === HttpStatusCode.NOT_FOUND) {
     return { notFound: true };
   }
 

@@ -12,8 +12,7 @@ import React, {
   Children,
   cloneElement,
   isValidElement,
-  useRef,
-  useState,
+  useEffect,
 } from "react";
 // components
 import DataGrid, {
@@ -21,6 +20,9 @@ import DataGrid, {
   type DataGridRow,
   type RowComponentProps,
 } from "./data-grid";
+// lib
+import { requestBiosamples } from "@/lib/common-requests";
+import FetchRequest from "@/lib/fetch-request";
 // types
 import type { DatabaseObject } from "@/globals.d";
 
@@ -161,21 +163,17 @@ function SortableHeaderCell({
   columnConfiguration,
   sortBy,
   sortDirection,
-  onClick,
   className,
   children,
 }: {
   columnConfiguration: SortableGridColumn;
   sortBy: string;
   sortDirection: SortDirection;
-  onClick: () => void;
   className: string;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={`justify-between hover:bg-gray-300 dark:hover:bg-gray-700 ${className}`}
     >
       <div className="flex-auto">{children}</div>
@@ -186,7 +184,7 @@ function SortableHeaderCell({
           sortDirection={sortDirection}
         />
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -249,7 +247,6 @@ function HeaderCell({
       columnConfiguration={columnConfiguration}
       sortBy={meta.sortBy}
       sortDirection={meta.sortDirection}
-      onClick={() => meta.handleSortClick(cells[cellIndex].id)}
       className="flex h-full w-full items-center bg-gray-200 p-2 text-left font-semibold dark:bg-gray-800"
     >
       {headerCellChildren}
@@ -264,111 +261,56 @@ function HeaderCell({
  * clicks for sorting, plus any additional information custom header cells need, it passes the cell
  * configuration for each column in its data-grid format `meta` property.
  */
-export default function SortableGrid({
+export default async function SortableGridStatic({
   data,
   columns,
   keyProp = "",
-  initialSort = {},
   meta = {},
-  isTotalCountHidden = false,
   CustomHeaderCell = HeaderCell,
 }: {
-  data: object[];
+  data: string[];
   columns: SortableGridColumn[];
   keyProp?: string;
-  initialSort?: {
-    columnId?: string;
-    direction?: SortDirection;
-    isSortingSuppressed?: boolean;
-  };
   meta?: object;
   isTotalCountHidden?: boolean;
   CustomHeaderCell?: React.ComponentType<RowComponentProps>;
 }) {
-  // id of the currently sorted column
-  const [sortBy, setSortBy] = useState(initialSort.columnId || columns[0].id);
-  // Whether the currently sorted column is sorted in ascending or descending order
-  const [sortDirection, setSortDirection] = useState(
-    initialSort.direction || SortDirection.ASC
-  );
-  const gridRef = useRef(null);
+  const request = new FetchRequest();
+  const displayData = (await requestBiosamples(
+    data,
+    request
+  )) as unknown as DatabaseObject[];
 
-  /**
-   * Called when the user clicks a column header to set its sorting.
-   * @param {string} column - id of the column to sort by.
-   */
-  function handleSortClick(column: string) {
-    if (sortBy === column) {
-      // Sorted column clicked. Reverse the sort direction.
-      setSortDirection(
-        sortDirection === SortDirection.ASC
-          ? SortDirection.DESC
-          : SortDirection.ASC
-      );
-    } else {
-      // Unsorted column clicked; sort by this column ascending.
-      setSortBy(column);
-      setSortDirection(SortDirection.ASC);
-    }
-  }
-
-  // Filter the columns to only include those that have a hide() function that returns false, or
-  // that don't have a hide() function at all.
-  const visibleColumns = columns.filter(
-    (column) => !column.hide || !column.hide(data, columns, meta)
-  );
-
-  // Generate the cells within the header row. The column title can contain a string or a React
-  // component.
-  const headerCells = visibleColumns.map((column) => {
-    return {
-      id: column.id,
-      content: column.title,
-      role: "columnheader",
-    };
-  });
-
-  // Generate the header row itself, containing the cells, as well as sorting information and the
-  // column configuration.
-  const headerRow: DataGridRow[] = [
-    {
-      id: "header",
-      cells: headerCells,
-      RowComponent: CustomHeaderCell,
-    },
-  ];
-
-  // Make sure the `sortBy` column actually exists in the columns. Sort by the first column if not.
-  const sortByColumn = visibleColumns.find((column) => column.id === sortBy);
-  if (!sortByColumn) {
-    setSortBy(visibleColumns[0].id);
-    return null;
-  }
-
-  // Convert the data (simple array of objects) into a data grid array and render the table.
-  const sortedData = initialSort.isSortingSuppressed
-    ? data
-    : sortData(data, meta, visibleColumns, sortBy, sortDirection);
-  const dataRows = convertObjectArrayToDataGrid(
-    sortedData,
-    visibleColumns,
-    keyProp
-  );
+  console.log("SAMPLE TABLE ************************************");
   return (
-    <div>
-      <DataGridContainer ref={gridRef}>
-        <DataGrid
-          data={headerRow.concat(dataRows)}
-          meta={{
-            ...meta,
-            sortBy,
-            columns: visibleColumns,
-            sortDirection,
-            handleSortClick,
-            dataLength: data.length,
-          }}
-        />
-      </DataGridContainer>
-    </div>
+    <>
+      <table>
+        {displayData.length > 0 && (
+          <tbody>
+            {displayData.map((item, index) => (
+              <tr
+                key={item["@id"]}
+                className="[&>td]:border [&>td]:border-black [&>td]:p-1"
+              >
+                <td>{index}.</td>
+                <td>{item["@id"]}</td>
+                <td>{item.accession}</td>
+                <td>{(item.award as DatabaseObject)["@id"]}</td>
+                <td>
+                  {(item.donors as string[])?.length > 0
+                    ? (item.donors as string[]).join(", ")
+                    : ""}
+                </td>
+                <td>{(item.modifications as DatabaseObject[])[0]["@id"]}</td>
+                <td>{(item.sample_terms as DatabaseObject[])[0]["@id"]}</td>
+                <td>{(item.sources as DatabaseObject[])[0]["@id"]}</td>
+                <td>{item.release_timestamp}</td>
+                <td>{item.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        )}
+      </table>
+    </>
   );
 }

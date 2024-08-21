@@ -41,38 +41,39 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
 } from "@heroicons/react/20/solid";
-import { useState } from "react";
+import { Children, useState } from "react";
 
 export type CollapseControl = {
   isCollapsed: boolean;
   setIsCollapsed: (isCollapsed: boolean) => void;
   isCollapseControlVisible: boolean;
-  items: any[];
+  items: React.ReactNode[];
 };
 
 /**
  * Hook to control the collapsed state of a list. It keeps the collapsed/expanded state and
  * handles the truncation of the list of items while collapsed.
- * @param {Array} items List of items to display
+ * @param {React.ReactNode} items List of items to display
  * @param {number} maxItemsBeforeCollapse Max number of items before the list appears collapsed
  * @param {boolean} isCollapsible True if the list should be collapsible
- * @returns {Object} Object containing the collapsed state, the collapsed/expanded state setter,
- *   and the truncated list of items
+ * @returns {CollapseControl} Object containing the collapsed state, the collapsed/expanded state
+ *   setter, and the truncated list of items
  */
 export function useCollapseControl(
-  items: any[],
+  items: React.ReactNode,
   maxItemsBeforeCollapse: number,
   isCollapsible = true
 ): CollapseControl {
   // True if the list appears collapsed
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const iterableItems = Children.toArray(items);
 
   const isCollapseControlVisible =
-    isCollapsible && items.length > maxItemsBeforeCollapse;
+    isCollapsible && iterableItems.length > maxItemsBeforeCollapse;
   const truncatedItems =
     isCollapseControlVisible && isCollapsed
-      ? items.slice(0, maxItemsBeforeCollapse)
-      : items;
+      ? iterableItems.slice(0, maxItemsBeforeCollapse)
+      : iterableItems;
 
   return {
     // True if the list appears collapsed; only applies if `isCollapsible` is true
