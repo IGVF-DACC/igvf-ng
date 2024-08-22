@@ -7,7 +7,7 @@ import {
   DataItemValue,
   DataPanel,
 } from "@/components/data-area";
-import SampleTable from "@/components/sample-table";
+import SampleTableStreamed from "@/components/sample-table-streamed";
 import { ObjectJson } from "@/components/object-json";
 import { ObjectJsonStatic } from "@/components/object-json-static";
 import { JsonDisplay } from "@/components/json-display";
@@ -63,7 +63,7 @@ export default async function CrisprModification({
     params.id
   )) as CrisprModificationObject;
 
-  console.log("MOD ************************************");
+  console.log("OBJECT PAGE ------------------------------------");
   return (
     <>
       <DataPanel>
@@ -97,14 +97,14 @@ export default async function CrisprModification({
           <DataItemLabel>Summary</DataItemLabel>
           <DataItemValue>{modification.summary}</DataItemValue>
         </DataArea>
-        <ObjectJson object={modification} />
+        {/* <ObjectJson object={modification} /> */}
         {/* <ObjectJsonStatic object={modification}>
-          <JsonDisplay object={modification} isVisible={true} />
+          <JsonDisplay object={modification} />
         </ObjectJsonStatic> */}
       </DataPanel>
       {modification.biosamples_modified.length > 0 && (
         <Suspense fallback={<div>Loading...</div>}>
-          <SampleTable samples={modification.biosamples_modified} />
+          <SampleTableStreamed samples={modification.biosamples_modified} />
         </Suspense>
       )}
     </>

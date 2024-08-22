@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Displays a sortable grid of data comprising an array of objects. The displayed grid uses CSS
  * grid (https://developer.mozilla.org/en-US/docs/Web/CSS/grid). See
@@ -176,7 +178,7 @@ function SortableHeaderCell({
     <button
       type="button"
       onClick={onClick}
-      className={`justify-between hover:bg-gray-300 dark:hover:bg-gray-700 ${className}`}
+      className={`justify-between hover:bg-gray-300 ${className}`}
     >
       <div className="flex-auto">{children}</div>
       <div className="flex-initial">
@@ -250,7 +252,7 @@ function HeaderCell({
       sortBy={meta.sortBy}
       sortDirection={meta.sortDirection}
       onClick={() => meta.handleSortClick(cells[cellIndex].id)}
-      className="flex h-full w-full items-center bg-gray-200 p-2 text-left font-semibold dark:bg-gray-800"
+      className="flex h-full w-full items-center bg-gray-200 p-2 text-left font-semibold"
     >
       {headerCellChildren}
     </HeaderCellRenderer>
@@ -285,6 +287,7 @@ export default function SortableGrid({
   isTotalCountHidden?: boolean;
   CustomHeaderCell?: React.ComponentType<RowComponentProps>;
 }) {
+  console.log("SORTABLE GRID ***********************");
   // id of the currently sorted column
   const [sortBy, setSortBy] = useState(initialSort.columnId || columns[0].id);
   // Whether the currently sorted column is sorted in ascending or descending order

@@ -24,7 +24,7 @@ export function ObjectJsonStatic({ object, children }: ObjectJsonStaticProps) {
       >
         {isJsonVisible ? "Hide" : "Show"} JSON
       </button>
-      {children}
+      {isJsonVisible && children}
     </div>
   );
 }

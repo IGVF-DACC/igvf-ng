@@ -19,7 +19,7 @@ export function ObjectJson({ object }: { object: DatabaseObject }) {
       >
         {isJsonVisible ? "Hide" : "Show"} JSON
       </button>
-      <JsonDisplay object={object} isVisible={isJsonVisible} />
+      {isJsonVisible && <JsonDisplay object={object} />}
     </div>
   );
 }

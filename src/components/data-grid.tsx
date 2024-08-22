@@ -47,11 +47,7 @@ export type DataGridRow = {
  * choose.
  */
 function DefaultCell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-full w-full bg-white p-2 dark:bg-gray-900">
-      {children}
-    </div>
-  );
+  return <div className="flex h-full w-full bg-white p-2">{children}</div>;
 }
 
 /**
@@ -71,8 +67,8 @@ export const DataGridContainer = forwardRef(function DataGridContainer(
     <div
       ref={ref}
       role="table"
-      className={`border-1 grid w-full gap-px overflow-x-auto border border-panel bg-gray-300 text-sm dark:outline-gray-700 dark:bg-gray-700${
-        className ? ` ${className}` : ""
+      className={`border-1 grid w-full gap-px overflow-x-auto border border-panel bg-gray-300 text-sm ${
+        className || ""
       }`}
     >
       {children}

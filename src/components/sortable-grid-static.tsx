@@ -19,12 +19,14 @@ import DataGrid, {
   DataGridContainer,
   type DataGridRow,
   type RowComponentProps,
-} from "./data-grid";
+} from "@/components/data-grid";
+import { SortableGridCore } from "@/components/sortable-grid-core";
 // lib
 import { requestBiosamples } from "@/lib/common-requests";
 import FetchRequest from "@/lib/fetch-request";
 // types
 import type { DatabaseObject } from "@/globals.d";
+import SortableGrid from "./sortable-grid";
 
 /**
  * The default maximum number of items in the table before the pager gets displayed.
@@ -281,36 +283,6 @@ export default async function SortableGridStatic({
     request
   )) as unknown as DatabaseObject[];
 
-  console.log("SAMPLE TABLE ************************************");
-  return (
-    <>
-      <table>
-        {displayData.length > 0 && (
-          <tbody>
-            {displayData.map((item, index) => (
-              <tr
-                key={item["@id"]}
-                className="[&>td]:border [&>td]:border-black [&>td]:p-1"
-              >
-                <td>{index}.</td>
-                <td>{item["@id"]}</td>
-                <td>{item.accession}</td>
-                <td>{(item.award as DatabaseObject)["@id"]}</td>
-                <td>
-                  {(item.donors as string[])?.length > 0
-                    ? (item.donors as string[]).join(", ")
-                    : ""}
-                </td>
-                <td>{(item.modifications as DatabaseObject[])[0]["@id"]}</td>
-                <td>{(item.sample_terms as DatabaseObject[])[0]["@id"]}</td>
-                <td>{(item.sources as DatabaseObject[])[0]["@id"]}</td>
-                <td>{item.release_timestamp}</td>
-                <td>{item.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        )}
-      </table>
-    </>
-  );
+  console.log("SAMPLE TABLE ****", displayData[0]);
+  return <SortableGridCore displayData={displayData} />;
 }
