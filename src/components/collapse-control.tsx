@@ -43,12 +43,16 @@ import {
 } from "@heroicons/react/20/solid";
 import { Children, useState } from "react";
 
-export type CollapseControl = {
+/**
+ * Keeps track of the collapsed state of a list and handles the truncation of the list of items
+ * while collapsed.
+ */
+export interface CollapseControl {
   isCollapsed: boolean;
   setIsCollapsed: (isCollapsed: boolean) => void;
   isCollapseControlVisible: boolean;
   items: React.ReactNode[];
-};
+}
 
 /**
  * Hook to control the collapsed state of a list. It keeps the collapsed/expanded state and
@@ -57,7 +61,7 @@ export type CollapseControl = {
  * @param {number} maxItemsBeforeCollapse Max number of items before the list appears collapsed
  * @param {boolean} isCollapsible True if the list should be collapsible
  * @returns {CollapseControl} Object containing the collapsed state, the collapsed/expanded state
- *   setter, and the truncated list of items
+ *     setter, and the truncated list of items
  */
 export function useCollapseControl(
   items: React.ReactNode,
@@ -80,7 +84,7 @@ export function useCollapseControl(
     isCollapsed,
     // Function to set the collapsed state
     setIsCollapsed,
-    // True if the list is collapsable and has enough items to need one
+    // True if the list is collapsible and has enough items to need one
     isCollapseControlVisible,
     // Truncated list of items to display
     items: truncatedItems,
@@ -101,19 +105,15 @@ export const DEFAULT_MAX_COLLAPSE_ITEMS_VERTICAL = 5;
 
 /**
  * Displays the expand/collapse control for a collapsible list.
- * @property {number} length - Number of items in the list
- * @property {boolean} isCollapsed - True if the list is collapsed
- * @property {function} setIsCollapsed - Function to set the collapsed state
+ * @param {number} length Number of items in the list
+ * @param {boolean} isCollapsed True if the list is collapsed
+ * @param {function} setIsCollapsed Function to set the collapsed state
  */
-export function CollapseControlInline({
+export const CollapseControlInline = ({
   length,
   isCollapsed,
   setIsCollapsed,
-}: {
-  length: number;
-  isCollapsed: boolean;
-  setIsCollapsed: (isCollapsed: boolean) => void;
-}) {
+}: CollapseControlInlineProps) => {
   const label = isCollapsed
     ? `Show all ${length} items in list`
     : `Show fewer items in list`;
@@ -139,27 +139,27 @@ export function CollapseControlInline({
       )}
     </button>
   );
-}
+};
+
+export type CollapseControlInlineProps = {
+  length: number;
+  isCollapsed: boolean;
+  setIsCollapsed: (isCollapsed: boolean) => void;
+};
 
 /**
  * Displays the expand/collapse control for `<DataItemList>`.
- * @property {number} length - Number of items in the list
- * @property {boolean} isCollapsed - True if the list is collapsed
- * @property {function} setIsCollapsed - Function to set the collapsed state
- * @property {boolean} isFullBorder - True if the list shows a border around items when more than
- *   one item is displayed
+ * @param {number} length Number of items in the list
+ * @param {boolean} isCollapsed True if the list is collapsed
+ * @param {function} setIsCollapsed Function to set the collapsed state
+ * @param {boolean} [isFullBorder] True if the control should have a full border (default is false)
  */
-export function CollapseControlVertical({
+export const CollapseControlVertical = ({
   length,
   isCollapsed,
   setIsCollapsed,
   isFullBorder = false,
-}: {
-  length: number;
-  isCollapsed: boolean;
-  setIsCollapsed: (isCollapsed: boolean) => void;
-  isFullBorder?: boolean;
-}) {
+}: CollapseControlVerticalProps) => {
   const label = isCollapsed
     ? `Show all ${length} items in list`
     : `Show fewer items in list`;
@@ -188,4 +188,8 @@ export function CollapseControlVertical({
       )}
     </button>
   );
-}
+};
+
+export type CollapseControlVerticalProps = CollapseControlInlineProps & {
+  isFullBorder?: boolean;
+};

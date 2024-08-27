@@ -1,5 +1,8 @@
 "use client";
 
+// node_modules
+import { PropsWithChildren } from "react";
+
 /**
  * Wrappers to display data items, typically used on pages that display a single object.
  *
@@ -23,21 +26,16 @@ import {
 
 /**
  * Display a collapsible list of items in the value area of a data item.
- * @property {boolean} isCollapsible - True if the list should be collapsible
- * @property {number} maxItemsBeforeCollapse - Maximum number of items to display before collapsing
- * @property {boolean} isUrlList - True if the list contains URLs
+ * @param {boolean} [isCollapsible] True if the list should be collapsible
+ * @param {number} [maxItemsBeforeCollapse] Maximum number of items to display before collapsing
+ * @param {boolean} [isUrlList] True if the list contains URLs
  */
 export function DataItemList({
   isCollapsible = false,
   maxItemsBeforeCollapse = DEFAULT_MAX_COLLAPSE_ITEMS_VERTICAL,
   isUrlList = false,
   children,
-}: {
-  isCollapsible?: boolean;
-  maxItemsBeforeCollapse?: number;
-  isUrlList?: boolean;
-  children: React.ReactNode;
-}) {
+}: PropsWithChildren<DataItemListProps>) {
   const childArray = Children.toArray(children);
   const collapser = useCollapseControl(
     childArray,
@@ -73,3 +71,10 @@ export function DataItemList({
     </div>
   );
 }
+
+export type DataItemListProps = {
+  isCollapsible?: boolean;
+  maxItemsBeforeCollapse?: number;
+  isUrlList?: boolean;
+  children: React.ReactNode;
+};

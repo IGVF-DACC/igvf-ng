@@ -4,9 +4,10 @@
 import _ from "lodash";
 import Link from "next/link";
 // components
-import LinkedIdAndStatus from "@/components/linked-id-and-status";
-import SeparatedList from "@/components/separated-list";
-import SortableGrid, {
+import { LinkedIdAndStatus } from "@/components/linked-id-and-status";
+import { SeparatedList } from "@/components/separated-list";
+import {
+  SortableGrid,
   type SortableGridColumn,
   type DisplayComponentProp,
 } from "@/components/sortable-grid";
@@ -27,10 +28,10 @@ const sampleColumns: SortableGridColumn[] = [
   {
     id: "type",
     title: "Type",
-    display: ({ source, meta }: DisplayComponentProp) => {
+    display: ({ source }: DisplayComponentProp) => {
       // Map the first @type to a human-readable collection title if available.
       const sourceType = source["@type"][0];
-      return <>sourceType</>;
+      return <>{sourceType}</>;
     },
   },
   {
@@ -83,7 +84,14 @@ const sampleColumns: SortableGridColumn[] = [
   },
 ];
 
-export function SampleTable({ samples }: { samples: DatabaseObject[] }) {
-  console.log("SAMPLE TABLE ************************************");
+/**
+ * Display a sortable table of the given sample objects.
+ * @param {DatabaseObject[]} samples The sample objects to display in the table
+ */
+export function SampleTable({ samples }: SampleTableProps) {
   return <SortableGrid data={samples} columns={sampleColumns} keyProp="@id" />;
 }
+
+export type SampleTableProps = {
+  samples: DatabaseObject[];
+};

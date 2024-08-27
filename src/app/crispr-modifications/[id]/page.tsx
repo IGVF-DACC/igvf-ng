@@ -1,24 +1,21 @@
 import { notFound } from "next/navigation";
 // components
-import AliasList from "@/components/alias-list";
+import { AliasList } from "@/components/alias-list";
 import {
   DataArea,
   DataItemLabel,
   DataItemValue,
   DataPanel,
 } from "@/components/data-area";
-import SampleTableStreamed from "@/components/sample-table-streamed";
-import { ObjectJson } from "@/components/object-json";
-import { ObjectJsonStatic } from "@/components/object-json-static";
-import { JsonDisplay } from "@/components/json-display";
+import { SampleTableStreamed } from "@/components/sample-table-streamed";
 // lib
-import FetchRequest from "@/lib/fetch-request";
+import { FetchRequest } from "@/lib/fetch-request";
 import { type ErrorObject } from "@/lib/fetch-request";
 // root
 import { type DatabaseObject } from "@/globals.d";
 import { Suspense } from "react";
 
-type CrisprModificationObject = DatabaseObject & {
+export interface CrisprModificationObject extends DatabaseObject {
   biosamples_modified: string[];
   cas: string;
   cas_species: string;
@@ -29,12 +26,12 @@ type CrisprModificationObject = DatabaseObject & {
   product_id?: string;
   sources?: string[];
   tagged_protein?: string;
-};
+}
 
 /**
  * Fetch a modification object from the database.
- * @param id uuid of the modification object to fetch
- * @returns the modification object or null if not found
+ * @param {string} id uuid of the modification object to fetch
+ * @returns {Promise<CrisprModificationObject>} The modification object
  */
 async function fetchObject(
   id: string
@@ -53,17 +50,15 @@ async function fetchObject(
 
 /**
  * Display a CRISPR modification object page.
+ * @param {string} params.id The uuid of the modification object
  */
 export default async function CrisprModification({
   params,
-}: {
-  params: { id: string };
-}): Promise<JSX.Element> {
+}: CrisprModificationProps) {
   const modification = (await fetchObject(
     params.id
   )) as CrisprModificationObject;
 
-  console.log("OBJECT PAGE ------------------------------------");
   return (
     <>
       <DataPanel>
@@ -97,10 +92,6 @@ export default async function CrisprModification({
           <DataItemLabel>Summary</DataItemLabel>
           <DataItemValue>{modification.summary}</DataItemValue>
         </DataArea>
-        {/* <ObjectJson object={modification} /> */}
-        {/* <ObjectJsonStatic object={modification}>
-          <JsonDisplay object={modification} />
-        </ObjectJsonStatic> */}
       </DataPanel>
       {modification.biosamples_modified.length > 0 && (
         <Suspense fallback={<div>Loading...</div>}>
@@ -110,3 +101,7 @@ export default async function CrisprModification({
     </>
   );
 }
+
+type CrisprModificationProps = {
+  params: { id: string };
+};

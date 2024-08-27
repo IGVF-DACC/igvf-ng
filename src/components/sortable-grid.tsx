@@ -14,48 +14,106 @@ import React, {
   Children,
   cloneElement,
   isValidElement,
+  PropsWithChildren,
   useRef,
   useState,
 } from "react";
 // components
-import DataGrid, {
+import {
+  DataGrid,
   DataGridContainer,
   type DataGridRow,
   type RowComponentProps,
-} from "./data-grid";
+} from "@/components/data-grid";
+import { TableCount } from "@/components/table-count";
 // types
 import type { DatabaseObject } from "@/globals.d";
 
 /**
- * The default maximum number of items in the table before the pager gets displayed.
+ * Sorting direction for a column in the grid.
+ * @property {string} ASC Sort in ascending order
+ * @property {string} DESC Sort in descending order
  */
-const DEFAULT_MAX_ITEMS_PER_PAGE = 10;
-
-enum SortDirection {
+export enum SortDirection {
   ASC = "asc",
   DESC = "desc",
 }
 
+/**
+ * Configures the initial sorting of the grid.
+ * @property {string} [initialColumnId] ID of the column to sort by initially
+ * @property {SortDirection} [initialDirection] Initial sort direction
+ * @property {boolean} [isSortingSuppressed] True to disable sorting for all columns; probably used
+ */
+export interface SortingConfig {
+  initialColumnId?: string;
+  initialDirection?: SortDirection;
+  isSortingSuppressed?: boolean;
+}
+
+/**
+ * Properties passed to the optional display component for a column.
+ * @property {DatabaseObject} source The object to display
+ * @property {Record<string, any>} [meta] Additional metadata for the display component
+ */
 export type DisplayComponentProp = {
   source: DatabaseObject;
   meta?: Record<string, any>;
 };
-export type DisplayComponentType = React.ComponentType<DisplayComponentProp>;
 
-export type SortableGridColumn = {
+/**
+ * React component to display the contents of a column in the grid.
+ */
+export type DisplayComponent = React.ComponentType<DisplayComponentProp>;
+
+/**
+ * Type for the function that returns a simple value for each cell in a column.
+ */
+export type ValueFunction = (item: DatabaseObject) => string;
+
+/**
+ * Type for the function that returns a sorting value for each cell in a column.
+ */
+export type SorterFunction = (
+  item: DatabaseObject,
+  meta: Record<string, any>
+) => string | number;
+
+/**
+ * Function to determine whether to hide a column.
+ */
+export type HideFunction = (
+  data: DatabaseObject[],
+  columns: SortableGridColumn[],
+  meta: Record<string, any>
+) => boolean;
+
+/**
+ * Configuration for a column in the sortable grid.
+ * @property {string} id Unique ID of the column, often the key in the object
+ * @property {React.ReactNode} title Title of the column, displayed in the header
+ * @property {DisplayComponent} [display] React component to display the contents of the column
+ * @property {ValueFunction} [value] Function to extract the cell's value from the object
+ * @property {SorterFunction} [sorter] Function to extract the sorting value from the object
+ * @property {boolean} [isSortable] True if the column is sortable; default is true
+ * @property {HideFunction} [hide] Function to determine whether to hide the column
+ */
+export interface SortableGridColumn {
   id: string;
-  title: string | React.ReactNode;
-  display?: DisplayComponentType;
-  value?: (item: any) => any;
-  sorter?: (item: any, meta: Record<string, any>) => any;
+  title: React.ReactNode;
+  display?: DisplayComponent;
+  value?: ValueFunction;
+  sorter?: SorterFunction;
+  hide?: HideFunction;
   isSortable?: boolean;
-  hide?: (
-    data: any[],
-    columns: SortableGridColumn[],
-    meta: Record<string, any>
-  ) => boolean;
-};
+}
 
+/**
+ * Properties passed to the React component that renders each column's header cell.
+ * @property {SortableGridColumn} columnConfiguration Configuration for the current column
+ * @property {string} sortBy ID of the column to sort by
+ * @property {SortDirection} sortDirection Sort direction; ascending or descending
+ */
 type HeaderCellProps = {
   columnConfiguration: SortableGridColumn;
   sortBy: string;
@@ -63,23 +121,41 @@ type HeaderCellProps = {
 };
 
 /**
+ * Metadata for each cell in the grid, including `meta` passed to `<SortableGrid>`.
+ * @property {string} sortBy ID of the column to sort by
+ * @property {SortableGridColumn[]} columns Column configuration for the sortable grid
+ * @property {SortDirection} sortDirection Sort direction; asc or desc
+ * @property {() => void} handleSortClick Function to call when a sortable column header is clicked
+ * @property {number} dataLength Number of items in the data array
+ * @property {Record<string, any>} [key] Additional metadata passed to `<SortableGrid>`
+ */
+type CellMeta = {
+  sortBy: string;
+  columns: SortableGridColumn[];
+  sortDirection: SortDirection;
+  handleSortClick: (column: string) => void;
+  dataLength: number;
+  [key: string]: any;
+};
+
+/**
  * `SortableGrid` renders an array of objects of a type. This function converts the contents of
  * this array to a form that `DataGrid` can render.
- * @param {array} items Array of objects to render in a sortable grid
- * @param {array} columns Column definitions for the sortable grid
- * @param {string} keyProp Property of each item to use as the React key; index used if not provided
- * @returns {array} `items` contents in a form suitable for passing to <DataGrid>
+ * @param {DatabaseObject[]} items Array of objects to render in a sortable grid
+ * @param {SortableGridColumn[]} columns Column definitions for the sortable grid
+ * @param {string} [keyProp] Property of each item to use as the React key; index used if not provided
+ * @returns {DataGridRow[]} `items` contents in a form suitable for passing to <DataGrid>
  */
 function convertObjectArrayToDataGrid(
-  items: any[],
+  items: DatabaseObject[],
   columns: SortableGridColumn[],
-  keyProp: string
+  keyProp = ""
 ): DataGridRow[] {
   return items.map((item, index) => {
     return {
-      id: keyProp ? item[keyProp] : index,
+      id: keyProp ? (item[keyProp] as string) : String(index),
       cells: columns.map((column) => {
-        let content = column.display || item[column.id] || null;
+        let content = column.display || item[column.id] || "";
 
         // If the column configuration `value()` specified for the current column, call it to
         // extract the cell's value.
@@ -88,25 +164,26 @@ function convertObjectArrayToDataGrid(
         }
         return { id: column.id, content, source: item };
       }),
-    };
+    } as DataGridRow;
   });
 }
 
 /**
  * Sort the data according to the provided column and direction.
- * @param {array} data Array of objects to sort
- * @param {object} meta Metadata for the grid
+ * @param {DatabaseObject[]} data Array of objects to sort
+ * @param {Record<string, any>} meta Metadata for the grid
+ * @param {SortableGridColumn[]} columns Column definitions for the sortable grid
  * @param {string} sortBy ID of the column to sort by
- * @param {string} sortDirections Sort direction; asc or desc
- * @returns {array} Sorted copy of incoming array of objects
+ * @param {SortDirection} sortDirections Sort direction; asc or desc
+ * @returns {DatabaseObject[]} Sorted copy of incoming array of objects
  */
 function sortData(
-  data: any[],
+  data: DatabaseObject[],
   meta: Record<string, any>,
   columns: SortableGridColumn[],
   sortBy: string,
   sortDirections: SortDirection
-): any[] {
+): DatabaseObject[] {
   const sortedColumnConfig = columns.find((column) => column.id === sortBy);
   if (sortedColumnConfig?.sorter) {
     return _.orderBy(
@@ -133,16 +210,15 @@ function sortData(
 /**
  * Display the sorting icon (including a blank icon for currently sorted and non-sortable columns)
  * for the current sortable table-header cell.
+ * @param {SortableGridColumn} columnConfiguration Configuration for the current column
+ * @param {string} sortBy ID of the column to sort by
+ * @param {SortDirection} sortDirection Sort direction; ascending or descending
  */
 function HeaderSortIcon({
   columnConfiguration,
   sortBy,
   sortDirection,
-}: {
-  columnConfiguration: SortableGridColumn;
-  sortBy: string;
-  sortDirection: SortDirection;
-}) {
+}: HeaderSortIconProps) {
   // Determine the appearance of the sorting icon based on the sort direction.
   const SortIcon =
     sortDirection === SortDirection.ASC ? ChevronUpIcon : ChevronDownIcon;
@@ -156,24 +232,28 @@ function HeaderSortIcon({
   );
 }
 
+type HeaderSortIconProps = {
+  columnConfiguration: SortableGridColumn;
+  sortBy: string;
+  sortDirection: SortDirection;
+};
+
 /**
  * Renders a sortable table header cell; one that reacts to clicks to sort the column.
+ * @param {SortableGridColumn} columnConfiguration Configuration for the current column
+ * @param {string} sortBy ID of the column to sort by
+ * @param {SortDirection} sortDirection Sort direction; ascending or descending
+ * @param {() => void} onClick Function to call when the header cell is clicked
+ * @param {string} className CSS classes to apply to the header cell
  */
-function SortableHeaderCell({
+const SortableHeaderCell = ({
   columnConfiguration,
   sortBy,
   sortDirection,
   onClick,
   className,
   children,
-}: {
-  columnConfiguration: SortableGridColumn;
-  sortBy: string;
-  sortDirection: SortDirection;
-  onClick: () => void;
-  className: string;
-  children: React.ReactNode;
-}) {
+}: PropsWithChildren<SortableHeaderCellProps>) => {
   return (
     <button
       type="button"
@@ -190,38 +270,48 @@ function SortableHeaderCell({
       </div>
     </button>
   );
-}
+};
+
+type SortableHeaderCellProps = {
+  columnConfiguration: SortableGridColumn;
+  sortBy: string;
+  sortDirection: SortDirection;
+  onClick: () => void;
+  className: string;
+  children: React.ReactNode;
+};
 
 /**
  * Renders a non-sortable table header cell.
+ * @param {string} className CSS classes to apply to the header cell
  */
-function NonSortableHeaderCell({
+const NonSortableHeaderCell = ({
   className,
   children,
-}: {
+}: PropsWithChildren<NonSortableHeaderCellProps>) => {
+  return <div className={className}>{children}</div>;
+};
+
+type NonSortableHeaderCellProps = {
   className: string;
   children: React.ReactNode;
-}) {
-  return <div className={className}>{children}</div>;
-}
+};
 
 /**
  * Default renderer for each header cell in a sortable grid, called by `DataGrid`. This gets
- * overridden with the `CustomHeaderCell` prop for `SortableGrid`.
+ * overridden with the `CustomHeaderCell` prop for `SortableGrid`. See `RowComponentProps` for
+ * the meanings of the props.
  */
-function HeaderCell({
+const HeaderCell = ({
   cells,
   cellIndex,
   meta,
   children,
-}: {
-  cells: any[];
-  cellIndex: number;
-  meta: Record<string, any>;
-  children: React.ReactNode;
-}) {
+}: PropsWithChildren<RowComponentProps>) => {
+  const cellMeta = meta as CellMeta;
+
   // Get the definition for the current column.
-  const columnConfiguration = meta.columns[cellIndex];
+  const columnConfiguration = cellMeta.columns[cellIndex];
 
   // Add potentially useful props to the cell children referencing React components for custom
   // header cell title renderers.
@@ -230,8 +320,8 @@ function HeaderCell({
       const componentChild = child as React.ReactElement<HeaderCellProps>;
       return cloneElement(componentChild, {
         columnConfiguration,
-        sortBy: meta.sortBy,
-        sortDirection: meta.sortDirection,
+        sortBy: cellMeta.sortBy,
+        sortDirection: cellMeta.sortDirection,
       });
     }
     return child;
@@ -242,22 +332,22 @@ function HeaderCell({
   const HeaderCellRenderer =
     (columnConfiguration.isSortable ||
       columnConfiguration.isSortable === undefined) &&
-    meta.dataLength > 1
+    cellMeta.dataLength > 1
       ? SortableHeaderCell
       : NonSortableHeaderCell;
 
   return (
     <HeaderCellRenderer
       columnConfiguration={columnConfiguration}
-      sortBy={meta.sortBy}
-      sortDirection={meta.sortDirection}
-      onClick={() => meta.handleSortClick(cells[cellIndex].id)}
+      sortBy={cellMeta.sortBy}
+      sortDirection={cellMeta.sortDirection}
+      onClick={() => cellMeta.handleSortClick(String(cells[cellIndex].id))}
       className="flex h-full w-full items-center bg-gray-200 p-2 text-left font-semibold"
     >
       {headerCellChildren}
     </HeaderCellRenderer>
   );
-}
+};
 
 /**
  * Display a sortable grid of data according to the provided columns. The data has to be an array
@@ -265,34 +355,32 @@ function HeaderCell({
  * convert `data` to data-grid format. To help the header cells know how to react to the user's
  * clicks for sorting, plus any additional information custom header cells need, it passes the cell
  * configuration for each column in its data-grid format `meta` property.
+ * @property {DatabaseObject[]} data Array of objects to display in the grid
+ * @property {SortableGridColumn[]} columns Column definitions for the grid
+ * @property {string} [keyProp] Property of each item to use as the React key; index used if
+ *     not provided
+ * @property {SortingConfig} [sortingConfig] Initial sorting configuration for the grid
+ * @property {object} [meta] Additional custom information to pass to the grid
+ * @property {boolean} [isTotalCountHidden] True if the total count of items is hidden
+ * @property {React.ComponentType<RowComponentProps>} [CustomHeaderCell] Custom header cell
+ *     component
  */
-export default function SortableGrid({
+export function SortableGrid({
   data,
   columns,
   keyProp = "",
-  initialSort = {},
+  sortingConfig = {},
   meta = {},
   isTotalCountHidden = false,
   CustomHeaderCell = HeaderCell,
-}: {
-  data: object[];
-  columns: SortableGridColumn[];
-  keyProp?: string;
-  initialSort?: {
-    columnId?: string;
-    direction?: SortDirection;
-    isSortingSuppressed?: boolean;
-  };
-  meta?: object;
-  isTotalCountHidden?: boolean;
-  CustomHeaderCell?: React.ComponentType<RowComponentProps>;
-}) {
-  console.log("SORTABLE GRID ***********************");
+}: SortableGridProps) {
   // id of the currently sorted column
-  const [sortBy, setSortBy] = useState(initialSort.columnId || columns[0].id);
+  const [sortBy, setSortBy] = useState(
+    sortingConfig.initialColumnId || columns[0].id
+  );
   // Whether the currently sorted column is sorted in ascending or descending order
   const [sortDirection, setSortDirection] = useState(
-    initialSort.direction || SortDirection.ASC
+    sortingConfig.initialDirection || SortDirection.ASC
   );
   const gridRef = useRef(null);
 
@@ -349,7 +437,7 @@ export default function SortableGrid({
   }
 
   // Convert the data (simple array of objects) into a data grid array and render the table.
-  const sortedData = initialSort.isSortingSuppressed
+  const sortedData = sortingConfig.isSortingSuppressed
     ? data
     : sortData(data, meta, visibleColumns, sortBy, sortDirection);
   const dataRows = convertObjectArrayToDataGrid(
@@ -359,6 +447,7 @@ export default function SortableGrid({
   );
   return (
     <div>
+      {!isTotalCountHidden && <TableCount count={data.length} />}
       <DataGridContainer ref={gridRef}>
         <DataGrid
           data={headerRow.concat(dataRows)}
@@ -375,3 +464,13 @@ export default function SortableGrid({
     </div>
   );
 }
+
+export type SortableGridProps = {
+  data: DatabaseObject[];
+  columns: SortableGridColumn[];
+  keyProp?: string;
+  sortingConfig?: SortingConfig;
+  meta?: Record<string, any>;
+  isTotalCountHidden?: boolean;
+  CustomHeaderCell?: React.ComponentType<RowComponentProps>;
+};

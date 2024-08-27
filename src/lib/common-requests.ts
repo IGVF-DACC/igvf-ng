@@ -1,5 +1,5 @@
 // lib
-import FetchRequest from "./fetch-request";
+import { FetchRequest } from "./fetch-request";
 // types
 import type {
   DatabaseObject,

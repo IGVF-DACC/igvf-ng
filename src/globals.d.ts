@@ -236,3 +236,8 @@ export type CollectionTitles = {
   "@type": string[];
   [key: string]: string;
 };
+
+/**
+ * Use to cast a React component to a ReactNode with a key.
+ */
+export type ReactNodeWithKey = React.ReactNode & { key: string };

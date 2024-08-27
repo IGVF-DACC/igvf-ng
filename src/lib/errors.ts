@@ -3,9 +3,9 @@
  */
 
 // lib
-import { type ErrorObject, HttpStatusCode } from "./fetch-request";
-// types
-import type { ServerSideProps } from "../globals.d";
+import { type ErrorObject, HttpStatusCode } from "@/lib/fetch-request";
+// root
+import type { ServerSideProps } from "@/globals.d";
 
 /**
  * Log the error to the console with a timestamp.

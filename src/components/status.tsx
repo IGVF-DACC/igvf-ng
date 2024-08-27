@@ -1,13 +1,3 @@
-// lib
-import { toShishkebabCase } from "@/lib/general";
-
-type StatusStyles = {
-  [key: string]: {
-    styles: string;
-    Icon: () => JSX.Element;
-  };
-};
-
 /**
  * Styles for each possible status value. As new status values get added to the schemas, add a
  * corresponding entry with its colors here. bg-[#xxxxxx] define the color of the badge background
@@ -228,30 +218,36 @@ const statusStyles: StatusStyles = {
   },
 };
 
+type StatusStyles = {
+  [key: string]: {
+    styles: string;
+    Icon: () => JSX.Element;
+  };
+};
+
+type StatusProps = {
+  status: string;
+  isAbbreviated?: boolean;
+};
+
 /**
  * Displays the status of any object. If new statuses get added, define their colors in the
  * `statusStyles` object above.
+ * @param {string} status Text status to display
+ * @param {boolean} [isAbbreviated] True to display the status in abbreviated form
  */
-export default function Status({
-  status,
-  isAbbreviated = false,
-}: {
-  status: string;
-  isAbbreviated?: boolean;
-}) {
+export function Status({ status, isAbbreviated = false }: StatusProps) {
   const stylesForStatus = statusStyles[status] || statusStyles.fallback;
   const { styles, Icon } = stylesForStatus;
 
   if (isAbbreviated) {
     return (
-      <>
-        <div
-          className={`shadow-status h-5 w-5 rounded-full border border-white ${styles}`}
-          data-testid={`status-pill-${status.replace(/\s/g, "-")}`}
-        >
-          <Icon />
-        </div>
-      </>
+      <div
+        className={`shadow-status h-5 w-5 rounded-full border border-white ${styles}`}
+        data-testid={`status-pill-${status.replace(/\s/g, "-")}`}
+      >
+        <Icon />
+      </div>
     );
   }
 

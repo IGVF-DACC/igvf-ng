@@ -1,7 +1,11 @@
-import { DataArea, DataAreaTitle } from "./data-area";
-import { DataItemLabel, DataItemValue, DataItemValueUrl } from "./data-item";
-import { DataItemList } from "./data-item-list";
-import { DataPanel } from "./data-panel";
+import { DataArea, DataAreaTitle } from "@/components/data-area/data-area";
+import {
+  DataItemLabel,
+  DataItemValue,
+  DataItemValueUrl,
+} from "@/components/data-area/data-item";
+import { DataItemList } from "@/components/data-area/data-item-list";
+import { DataPanel } from "@/components/data-area/data-panel";
 
 export {
   DataArea,

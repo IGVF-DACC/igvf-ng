@@ -1,14 +1,15 @@
 "use client";
 
 // node_modules
-import { Children, Fragment } from "react";
+import { Children, Fragment, PropsWithChildren } from "react";
 // components
 import {
   CollapseControlInline,
   DEFAULT_MAX_COLLAPSE_ITEMS_INLINE,
   useCollapseControl,
-  type CollapseControl,
-} from "./collapse-control";
+} from "@/components/collapse-control";
+// root
+import type { ReactNodeWithKey } from "@/globals.d";
 
 /**
  * Display a list of inline React components with a separator between the items -- sort of like
@@ -45,27 +46,23 @@ import {
  *   </SeparatedList>
  * </SeparatedList>
  * // Expected output: "First component, Second component LINK Third component, Fourth component"
+ *
+ * @param {React.ReactNode} [separator] The separator between the items in the list
+ * @param {string} [className] Class name for the list container
+ * @param {string} [testid] Test ID for the list container
+ * @param {boolean} [isCollapsible] True if the list is collapsible
+ * @param {number} [maxItemsBeforeCollapse] Maximum number of items to display before the list
+ *     collapses
  */
 
-export type SeparatedListProps = {
-  separator?: React.ReactNode;
-  className?: string;
-  testid?: string;
-  isCollapsible?: boolean;
-  maxItemsBeforeCollapse?: number;
-  children: React.ReactNode;
-};
-
-type ReactNodeWithKey = React.ReactNode & { key: string };
-
-export default function SeparatedList({
+export function SeparatedList({
   separator = ", ",
   className = "",
   testid = "",
   isCollapsible = false,
   maxItemsBeforeCollapse = DEFAULT_MAX_COLLAPSE_ITEMS_INLINE,
   children,
-}: SeparatedListProps) {
+}: PropsWithChildren<SeparatedListProps>) {
   const collapser = useCollapseControl(
     children,
     maxItemsBeforeCollapse,
@@ -108,5 +105,13 @@ export default function SeparatedList({
       </div>
     );
   }
-  return null;
 }
+
+export type SeparatedListProps = {
+  separator?: React.ReactNode;
+  className?: string;
+  testid?: string;
+  isCollapsible?: boolean;
+  maxItemsBeforeCollapse?: number;
+  children: React.ReactNode;
+};

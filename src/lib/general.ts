@@ -3,7 +3,7 @@ import { UC } from "./constants";
 
 /**
  * Convert an object path into the object type.
- * @param {string} path The @id of the object to get the type for
+ * @param {string} path The `@id` of the object to get the type for
  * @returns {string} Type of the object this path comes from; empty string if no type could be found
  */
 export function pathToType(path: string): string {
@@ -17,8 +17,8 @@ export function pathToType(path: string): string {
 /**
  * Given a path to an object, return the id of the object, meaning the last part of the path. For
  * example given the path /type/orange/, this function would return `orange`.
- * @param path The @id of the object to get the id for.
- * @returns The id of the object from the given path
+ * @param {string} path The `@id` of the object to get the id for.
+ * @returns {string} The id of the object from the given path
  */
 export function pathToId(path: string): string {
   const matched = path.match(/^\/.+\/(.+)\/$/);
@@ -30,8 +30,8 @@ export function pathToId(path: string): string {
 
 /**
  * Check whether the input string is a path or not.
- * @param input String to check if it is a path
- * @returns True if the input is a path
+ * @param {string} input String to check if it is a path
+ * @returns {boolean} True if the input is a path
  */
 export function isValidPath(input: string): boolean {
   return input.startsWith("/");
@@ -111,8 +111,8 @@ export function nullOnError<T, E extends IsError>(x: T | E | null): T | null {
  * themselves objects get sorted recursively. Properties that are arrays of objects have their
  * objects sorted. This does not handle arrays of arrays of objects, so hopefully we don't have to
  * deal with that.
- * @param obj Sort the properties of this object
- * @returns Copy of `obj` with its properties sorted
+ * @param {object} obj Sort the properties of this object
+ * @returns {object} Copy of `obj` with its properties sorted
  */
 export function sortObjectProps(obj: object): object {
   return Object.keys(obj)
@@ -191,7 +191,7 @@ const MAX_CELL_JSON_LENGTH = 200;
 
 /**
  * Convert an object to stringified JSON and truncate it to the desired length.
- * @param {object} obj Object or array to stringify and truncate
+ * @param {JSON} obj Object or array to stringify and truncate
  * @param {number} [maxOutputLength] Maximum number of characters to display
  * @returns {string} Truncated JSON
  */

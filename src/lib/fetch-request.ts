@@ -27,16 +27,13 @@
 
 // lib
 import { API_URL, SERVER_URL, BACKEND_URL, MAX_URL_LENGTH } from "./constants";
-
-// TYPES
+import { ok, err, Result, Ok } from "@/lib/result";
 // root
 import type {
   DatabaseObject,
   DataProviderObject,
   SessionObject,
-} from "../globals.d";
-// lib
-import { ok, err, Result, Ok } from "./result";
+} from "@/globals.d";
 
 /**
  * Possible request methods for a fetch request.
@@ -141,8 +138,6 @@ enum PayloadFormat {
   FORM_DATA = "multipart/form-data",
   JSON_PATCH = "application/json-patch+json",
   JSON_MERGE_PATCH = "application/json-merge-patch+json",
-  JSON_PATCH_JSON = "application/json-patch+json",
-  JSON_MERGE_PATCH_JSON = "application/json-merge-patch+json",
 }
 
 export enum HttpStatusCode {
@@ -225,7 +220,7 @@ function logRequest(method: string, path: string): void {
  *   session: Session object from the data server for authenticating client-side requests
  * }
  */
-export default class FetchRequest {
+export class FetchRequest {
   private headers = new Headers();
   private backend = false;
   private revalidateSeconds: number | undefined;
@@ -295,15 +290,15 @@ export default class FetchRequest {
    * the maximum size of a query string -- each group an array of paths with a maximum calculated
    * size. This function returns an array of these groups -- an array of arrays of paths, with no
    * sub-array having a length greater than the amount that would fit within a URL.
-   * @param {Array<string>} paths Path of each object to request
+   * @param {string[]} paths Path of each object to request
    * @param {number} adjustment Number of characters to subtract from the URL length for other
    *     query-string elements
-   * @returns {Array<Array<string>>} Array of arrays (groups) of paths
+   * @returns {Array<string[]>} Array of arrays (groups) of paths
    */
   private pathsIntoPathGroups(
-    paths: Array<string>,
+    paths: string[],
     adjustment: number
-  ): Array<Array<string>> {
+  ): Array<string[]> {
     // Calculate the maximum number of paths that can fit into a query string.
     const maxGroupSize = Math.floor(
       (MAX_URL_LENGTH - adjustment) / MAX_PATH_QUERY_LENGTH_ESTIMATE
@@ -312,7 +307,7 @@ export default class FetchRequest {
     // Break the paths into groups of maxGroupSize. Each group gets converted to a query string
     // and sent as a single request.
     const pathGroups = paths.reduce(
-      (groups: Array<Array<string>>, path: string) => {
+      (groups: Array<string[]>, path: string) => {
         const lastGroup = groups[groups.length - 1];
         if (lastGroup.length < maxGroupSize) {
           // The last group in the array of groups still has room for a new path.
@@ -351,7 +346,7 @@ export default class FetchRequest {
   /**
    * Build the complete request URL for the given path, appropriate for client and server requests.
    * @param {string} path Path to append to the base URL
-   * @param {boolean} isDbRequest? True to get data from database instead of search engine
+   * @param {boolean} [isDbRequest] True to get data from database instead of search engine
    * @returns {string} Complete URL for the given path
    */
   private pathUrl(path: string, isDbRequest = false): string {
@@ -365,10 +360,10 @@ export default class FetchRequest {
   /**
    * Build the options object for a fetch() request, including the headers.
    * @param {string} method Method to use for the request
-   * @param {object} options Unnamed parameter indicating request options
-   * @param {object} options.payload? Object to send as the request body
-   * @param {string} options.accept? Accept header to send with the request
-   * @param {string} options.contentType? Content-Type header to send with the request
+   * @param {object} additional Unnamed parameter indicating request options
+   * @param {object} [additional.payload] Object to send as the request body
+   * @param {string} [additional.accept] Accept header to send with the request
+   * @param {string} [additional.contentType] Content-Type header to send with the request
    * @returns {NextRequestInit} Options object for fetch()
    */
   private buildOptions(
@@ -405,9 +400,10 @@ export default class FetchRequest {
 
   /**
    * Request the object with the given path.
-   * @param path Path to requested resource
-   * @param options? indicating request options
-   * @returns Requested object, error object, or  `defaultErrorValue` if given and the request fails
+   * @param {string} path Path to requested resource
+   * @param {FetchOptions} [options] indicating request options
+   * @returns {Promise<Result<DataProviderObject, ErrorObject>>} Requested object or error object,
+   *     or `defaultErrorValue` if given and the request fails
    */
   public async getObject(
     path: string,
@@ -443,7 +439,6 @@ export default class FetchRequest {
   /**
    * Request the object with the given URL, including protocol and domain.
    * @param {string} url Full URL to requested resource
-   * @param {T} defaultErrorValue? Value to return if the request fails; error object if not given
    * @returns {Promise<DataProviderObject|ErrorObject>} Requested object or error object
    */
   public async getObjectByUrl(
@@ -474,13 +469,12 @@ export default class FetchRequest {
    * Request a number of objects with the given paths, returning each path's resource in an array
    * in the same order as their paths in the given array. Any paths that result in an error
    * get placed that array entry.
-   * @param {array} paths Array of paths to requested resources
-   * @param {object} options? Options for these requests
-   * @param {boolean} options.filterErrors True to filter errored requests from the returned array
+   * @param {string[]} paths Array of paths to requested resources
+   * @param {object} [options] indicating request options
    * @returns {Promise<Array<DataProviderObject|ErrorObject|T>>} Array of requested objects
    */
   public async getMultipleObjects(
-    paths: Array<string>,
+    paths: string[],
     options = { filterErrors: false }
   ): Promise<Array<Result<DataProviderObject, ErrorObject>>> {
     logRequest("getMultipleObjects", `[${paths.join(", ")}]`);
@@ -502,9 +496,9 @@ export default class FetchRequest {
    * request. Unlike `getMultipleObjects()`, this method never returns an array that could contain
    * entries for failed requests. It instead either returns an array of successfully requested
    * objects, or a single error value.
-   * @param {Array<string>} paths Path of each object to request
-   * @param {Array<string>} fields Properties of each object to retrieve
-   * @returns {Promise<Result<Array<DataProviderObject>, ErrorObject>>} Array of requested objects
+   * @param {string[]} paths Path of each object to request
+   * @param {string[]} fields Properties of each object to retrieve
+   * @returns {Promise<Result<DataProviderObject[], ErrorObject>>} Array of requested objects
    */
   async getMultipleObjectsBulk(
     paths: Array<string>,
@@ -592,12 +586,12 @@ export default class FetchRequest {
   /**
    * Send a POST request with the given object.
    * @param {string} path Path to resource to post to
-   * @param {object} payload Object to post
+   * @param {DataProviderObject} payload Object to post
    * @returns {Promise<DataProviderObject|ErrorObject>} Response from POST request
    */
   public async postObject(
     path: string,
-    payload: object
+    payload: DataProviderObject
   ): Promise<DataProviderObject | ErrorObject> {
     logRequest("postObject", path);
     const options = this.buildOptions(FetchMethod.POST, {
@@ -617,12 +611,12 @@ export default class FetchRequest {
   /**
    * Write the given object with a PUT request.
    * @param {string} path Path to resource to put
-   * @param {object} payload Object to put at the given path
+   * @param {DataProviderObject} payload Object to put at the given path
    * @returns {Promise<DataProviderObject|ErrorObject>} Response from PUT request
    */
   public async putObject(
     path: string,
-    payload: object
+    payload: DataProviderObject
   ): Promise<DataProviderObject | ErrorObject> {
     const options = this.buildOptions(FetchMethod.PUT, {
       accept: PayloadFormat.JSON,
@@ -642,12 +636,12 @@ export default class FetchRequest {
   /**
    * Patch the object at the given path with the given payload.
    * @param {string} path Path to resource to patch
-   * @param {object} payload Object to merge into patched object
+   * @param {DataProviderObject} payload Object to merge into patched object
    * @returns {DataProviderObject|ErrorObject} Response from PATCH request
    */
   public async patchObject(
     path: string,
-    payload: object
+    payload: DataProviderObject
   ): Promise<DataProviderObject | ErrorObject> {
     const options = this.buildOptions(FetchMethod.PATCH, {
       accept: PayloadFormat.JSON,
