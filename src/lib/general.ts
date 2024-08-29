@@ -53,7 +53,7 @@ export function isValidUrl(url: string): boolean {
 }
 
 /**
- * Strips off the url parameters from the url path
+ * Strips off query-string parameters from the url path.
  * @param {string} url The url to strip query parameters from
  * @returns {string} The URL string without the query parameters
  */
@@ -62,11 +62,9 @@ export function urlWithoutParams(url: string): string {
 }
 
 /**
- * Get the item `@id` from either just the ID string itself or
- * from an object with `@id` as a key.
+ * Get the item `@id` from either just the ID string itself or from an object with `@id` as a key.
  * @param {string} item The item, either string or object with `@id`
- * @returns The `@id` value if item is an object or just the passed
- * in string if a string
+ * @returns The `@id` value if item is an object or just the passed in string if a string
  */
 export function itemId(item: string | { "@id": string }): string {
   return typeof item === "string" ? item : item["@id"];
