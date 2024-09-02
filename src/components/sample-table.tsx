@@ -85,7 +85,7 @@ const sampleColumns: SortableGridColumn[] = [
 ];
 
 /**
- * Display a sortable table of the given sample objects.
+ * Display a sortable table of the given sample objects. These objects must already be in memory.
  * @param {DatabaseObject[]} samples The sample objects to display in the table
  */
 export function SampleTable({ samples }: SampleTableProps) {

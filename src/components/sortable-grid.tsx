@@ -25,19 +25,33 @@ import {
   type DataGridRow,
   type RowComponentProps,
 } from "@/components/data-grid";
+import { Pager } from "@/components/pager";
 import { TableCount } from "@/components/table-count";
 // types
 import type { DatabaseObject } from "@/globals.d";
+
+/**
+ * Default maximum number of items to display per page in the table.
+ */
+const DEFAULT_MAX_ITEMS_PER_PAGE = 5;
 
 /**
  * Sorting direction for a column in the grid.
  * @property {string} ASC Sort in ascending order
  * @property {string} DESC Sort in descending order
  */
-export enum SortDirection {
-  ASC = "asc",
-  DESC = "desc",
-}
+export type SortDirection = "asc" | "desc";
+
+/**
+ * Configuration for the pager control.
+ * @property {number} [currentPageIndex] Currently displayed page; 0-based index
+ * @property {number} [maxItemsPerPage] Maximum number of items to display in the table before the pager
+ *    appears
+ */
+export type PagerConfig = {
+  currentPageIndex?: number;
+  maxItemsPerPage?: number;
+};
 
 /**
  * Configures the initial sorting of the grid.
@@ -45,11 +59,11 @@ export enum SortDirection {
  * @property {SortDirection} [initialDirection] Initial sort direction
  * @property {boolean} [isSortingSuppressed] True to disable sorting for all columns; probably used
  */
-export interface SortingConfig {
+export type SortingConfig = {
   initialColumnId?: string;
   initialDirection?: SortDirection;
   isSortingSuppressed?: boolean;
-}
+};
 
 /**
  * Properties passed to the optional display component for a column.
@@ -220,8 +234,7 @@ function HeaderSortIcon({
   sortDirection,
 }: HeaderSortIconProps) {
   // Determine the appearance of the sorting icon based on the sort direction.
-  const SortIcon =
-    sortDirection === SortDirection.ASC ? ChevronUpIcon : ChevronDownIcon;
+  const SortIcon = sortDirection === "asc" ? ChevronUpIcon : ChevronDownIcon;
 
   return (
     <SortIcon
@@ -246,14 +259,14 @@ type HeaderSortIconProps = {
  * @param {() => void} onClick Function to call when the header cell is clicked
  * @param {string} className CSS classes to apply to the header cell
  */
-const SortableHeaderCell = ({
+function SortableHeaderCell({
   columnConfiguration,
   sortBy,
   sortDirection,
   onClick,
   className,
   children,
-}: PropsWithChildren<SortableHeaderCellProps>) => {
+}: PropsWithChildren<SortableHeaderCellProps>) {
   return (
     <button
       type="button"
@@ -270,7 +283,7 @@ const SortableHeaderCell = ({
       </div>
     </button>
   );
-};
+}
 
 type SortableHeaderCellProps = {
   columnConfiguration: SortableGridColumn;
@@ -285,12 +298,12 @@ type SortableHeaderCellProps = {
  * Renders a non-sortable table header cell.
  * @param {string} className CSS classes to apply to the header cell
  */
-const NonSortableHeaderCell = ({
+function NonSortableHeaderCell({
   className,
   children,
-}: PropsWithChildren<NonSortableHeaderCellProps>) => {
+}: PropsWithChildren<NonSortableHeaderCellProps>) {
   return <div className={className}>{children}</div>;
-};
+}
 
 type NonSortableHeaderCellProps = {
   className: string;
@@ -302,12 +315,12 @@ type NonSortableHeaderCellProps = {
  * overridden with the `CustomHeaderCell` prop for `SortableGrid`. See `RowComponentProps` for
  * the meanings of the props.
  */
-const HeaderCell = ({
+function HeaderCell({
   cells,
   cellIndex,
   meta,
   children,
-}: PropsWithChildren<RowComponentProps>) => {
+}: PropsWithChildren<RowComponentProps>) {
   const cellMeta = meta as CellMeta;
 
   // Get the definition for the current column.
@@ -347,6 +360,45 @@ const HeaderCell = ({
       {headerCellChildren}
     </HeaderCellRenderer>
   );
+}
+
+/**
+ * Displays a pager control intended for a table, often used with `<SortableGrid>`. The pager only
+ * appears when the number of items in the table exceeds the maximum number of items per page.
+ * @param {DatabaseObject[]} data Objects to display in the table
+ * @param {number} currentPageIndex Currently displayed page; 0-based index
+ * @param {function} setCurrentPageIndex Function to call when the user selects a new page
+ * @param {number} maxItemsPerPage Maximum number of items to display in the table before the pager
+ */
+function TablePager({
+  data,
+  currentPageIndex,
+  setCurrentPageIndex,
+  maxItemsPerPage,
+}: TablePagerProps) {
+  const totalPages = Math.ceil(data.length / maxItemsPerPage);
+  if (totalPages > 1) {
+    return (
+      <div
+        className="flex justify-center border-l border-r border-panel bg-gray-100 py-0.5 dark:bg-gray-900"
+        data-testid="table-pager"
+      >
+        <Pager
+          currentPage={currentPageIndex + 1}
+          totalPages={totalPages}
+          onClick={(newCurrentPage) => setCurrentPageIndex(newCurrentPage - 1)}
+        />
+      </div>
+    );
+  }
+  return null;
+}
+
+type TablePagerProps = {
+  data: DatabaseObject[];
+  currentPageIndex: number;
+  setCurrentPageIndex: (newCurrentPage: number) => void;
+  maxItemsPerPage: number;
 };
 
 /**
@@ -369,6 +421,7 @@ export function SortableGrid({
   data,
   columns,
   keyProp = "",
+  pagerConfig = {},
   sortingConfig = {},
   meta = {},
   isTotalCountHidden = false,
@@ -378,11 +431,17 @@ export function SortableGrid({
   const [sortBy, setSortBy] = useState(
     sortingConfig.initialColumnId || columns[0].id
   );
-  // Whether the currently sorted column is sorted in ascending or descending order
-  const [sortDirection, setSortDirection] = useState(
-    sortingConfig.initialDirection || SortDirection.ASC
+  // Whether the currently sorted column is sorted in ascending or descending order.
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    sortingConfig.initialDirection || "asc"
   );
   const gridRef = useRef(null);
+
+  // Current page if the table has a pager not managed by the parent.
+  const [pageIndex, setPageIndex] = useState(0);
+  const currentPageIndex = pagerConfig?.currentPageIndex ?? pageIndex;
+  const maxItemsPerPage =
+    pagerConfig?.maxItemsPerPage || DEFAULT_MAX_ITEMS_PER_PAGE;
 
   /**
    * Called when the user clicks a column header to set its sorting.
@@ -391,15 +450,11 @@ export function SortableGrid({
   function handleSortClick(column: string) {
     if (sortBy === column) {
       // Sorted column clicked. Reverse the sort direction.
-      setSortDirection(
-        sortDirection === SortDirection.ASC
-          ? SortDirection.DESC
-          : SortDirection.ASC
-      );
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       // Unsorted column clicked; sort by this column ascending.
       setSortBy(column);
-      setSortDirection(SortDirection.ASC);
+      setSortDirection("asc");
     }
   }
 
@@ -440,14 +495,26 @@ export function SortableGrid({
   const sortedData = sortingConfig.isSortingSuppressed
     ? data
     : sortData(data, meta, visibleColumns, sortBy, sortDirection);
+
+  // Extract the current page of data from sortedData if the table has a pager.
+  const pagedData = sortedData.slice(
+    currentPageIndex * maxItemsPerPage,
+    (currentPageIndex + 1) * maxItemsPerPage
+  );
   const dataRows = convertObjectArrayToDataGrid(
-    sortedData,
+    pagedData,
     visibleColumns,
     keyProp
   );
   return (
     <div>
       {!isTotalCountHidden && <TableCount count={data.length} />}
+      <TablePager
+        data={data}
+        currentPageIndex={currentPageIndex}
+        setCurrentPageIndex={setPageIndex}
+        maxItemsPerPage={maxItemsPerPage}
+      />
       <DataGridContainer ref={gridRef}>
         <DataGrid
           data={headerRow.concat(dataRows)}
@@ -469,6 +536,7 @@ export type SortableGridProps = {
   data: DatabaseObject[];
   columns: SortableGridColumn[];
   keyProp?: string;
+  pagerConfig?: PagerConfig;
   sortingConfig?: SortingConfig;
   meta?: Record<string, any>;
   isTotalCountHidden?: boolean;

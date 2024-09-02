@@ -7,13 +7,12 @@ import {
   DataItemValue,
   DataPanel,
 } from "@/components/data-area";
-import { SampleTableStreamed } from "@/components/sample-table-streamed";
+import { SampleTable } from "@/components/sample-table";
 // lib
-import { FetchRequest } from "@/lib/fetch-request";
-import { type ErrorObject } from "@/lib/fetch-request";
+import { requestSamples } from "@/lib/common-requests";
+import { FetchRequest, type ErrorObject } from "@/lib/fetch-request";
 // root
 import { type DatabaseObject } from "@/globals.d";
-import { Suspense } from "react";
 
 export interface CrisprModificationObject extends DatabaseObject {
   biosamples_modified: string[];
@@ -33,19 +32,33 @@ export interface CrisprModificationObject extends DatabaseObject {
  * @param {string} id uuid of the modification object to fetch
  * @returns {Promise<CrisprModificationObject>} The modification object
  */
-async function fetchObject(
-  id: string
-): Promise<CrisprModificationObject | void> {
+async function fetchPageObject(id: string): Promise<CrisprModificationObject> {
   const request = new FetchRequest();
-  const modification = (
+  const requestedObject = (
     await request.getObject(`/crispr-modifications/${id}/`)
   ).union() as DatabaseObject | ErrorObject;
-  if (FetchRequest.isResponseSuccess(modification)) {
-    return modification as CrisprModificationObject;
+  if (FetchRequest.isResponseSuccess(requestedObject)) {
+    return requestedObject as CrisprModificationObject;
   }
-  if (!modification) {
+  if (!requestedObject) {
     notFound();
   }
+  return {} as CrisprModificationObject;
+}
+
+/**
+ * Fetch the biosamples modified by a modification object.
+ * @param {CrisprModificationObject} modification Modification object to get biosamples from
+ * @returns {Promise<DatabaseObject[]>} The biosamples modified by the modification object
+ */
+async function fetchBiosamplesModified(
+  modification: CrisprModificationObject
+): Promise<DatabaseObject[]> {
+  if (modification.biosamples_modified.length > 0) {
+    const request = new FetchRequest();
+    return requestSamples(modification.biosamples_modified, request);
+  }
+  return [];
 }
 
 /**
@@ -55,9 +68,8 @@ async function fetchObject(
 export default async function CrisprModification({
   params,
 }: CrisprModificationProps) {
-  const modification = (await fetchObject(
-    params.id
-  )) as CrisprModificationObject;
+  const modification = await fetchPageObject(params.id);
+  const biosamplesModified = await fetchBiosamplesModified(modification);
 
   return (
     <>
@@ -93,10 +105,8 @@ export default async function CrisprModification({
           <DataItemValue>{modification.summary}</DataItemValue>
         </DataArea>
       </DataPanel>
-      {modification.biosamples_modified.length > 0 && (
-        <Suspense fallback={<div>Loading...</div>}>
-          <SampleTableStreamed samples={modification.biosamples_modified} />
-        </Suspense>
+      {biosamplesModified.length > 0 && (
+        <SampleTable samples={biosamplesModified} />
       )}
     </>
   );

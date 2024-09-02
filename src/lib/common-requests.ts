@@ -294,7 +294,7 @@ export async function requestPhenotypicFeatures(
 export async function requestSamples(
   paths: string[],
   request: FetchRequest
-): Promise<DataProviderObject[]> {
+): Promise<DatabaseObject[]> {
   return (
     await request.getMultipleObjectsBulk(paths, [
       "accession",
@@ -304,7 +304,7 @@ export async function requestSamples(
       "status",
       "summary",
     ])
-  ).unwrap_or([]);
+  ).unwrap_or([]) as DatabaseObject[];
 }
 
 /**

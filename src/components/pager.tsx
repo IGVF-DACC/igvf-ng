@@ -7,7 +7,6 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/20/solid";
 import _ from "lodash";
-import PropTypes from "prop-types";
 // components
 import { Button } from "@/components/form-elements";
 
@@ -182,15 +181,4 @@ type PagerProps = {
   totalPages: number;
   onClick: (newPage: number) => void;
   className?: string;
-};
-
-Pager.propTypes = {
-  // Currently selected page
-  currentPage: PropTypes.number.isRequired,
-  // Total number of pages
-  totalPages: PropTypes.number.isRequired,
-  // Called when the user clicks a button in the pager; passes the new page number
-  onClick: PropTypes.func.isRequired,
-  // Tailwind CSS classes to add to the pager
-  className: PropTypes.string,
 };

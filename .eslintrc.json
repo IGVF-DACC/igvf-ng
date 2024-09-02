@@ -6,6 +6,21 @@
   ],
   "parser": "@typescript-eslint/parser",
   "rules": {
+    "no-multiple-empty-lines": ["error", { "max": 1 }],
+    "no-restricted-syntax": [
+      // Disallow top-level arrow functions and function expressions; only allow them inside other functions
+      "error",
+      {
+        "selector": "Program > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression",
+        "message": "Top-level arrow functions are not allowed. Use a function declaration instead."
+      },
+      {
+        "selector": "Program > VariableDeclaration > VariableDeclarator > FunctionExpression",
+        "message": "Top-level function expressions are not allowed. Use a function declaration instead."
+      }
+    ],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -14,9 +29,6 @@
         "ignoreRestSiblings": true,
         "vars": "all"
       }
-    ],
-    "no-multiple-empty-lines": ["error", { "max": 1 }],
-    "no-unused-vars": "off",
-    "@typescript-eslint/no-explicit-any": "off"
+    ]
   }
 }
