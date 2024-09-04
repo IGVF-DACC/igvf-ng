@@ -1,4 +1,6 @@
+// node_modules
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 // components
 import { AliasList } from "@/components/alias-list";
 import {
@@ -7,9 +9,8 @@ import {
   DataItemValue,
   DataPanel,
 } from "@/components/data-area";
-import { SampleTable } from "@/components/sample-table";
+import { SampleTableStreamed } from "@/components/sample-table-streamed";
 // lib
-import { requestSamples } from "@/lib/common-requests";
 import { FetchRequest, type ErrorObject } from "@/lib/fetch-request";
 // root
 import { type DatabaseObject } from "@/globals.d";
@@ -47,21 +48,6 @@ async function fetchPageObject(id: string): Promise<CrisprModificationObject> {
 }
 
 /**
- * Fetch the biosamples modified by a modification object.
- * @param {CrisprModificationObject} modification Modification object to get biosamples from
- * @returns {Promise<DatabaseObject[]>} The biosamples modified by the modification object
- */
-async function fetchBiosamplesModified(
-  modification: CrisprModificationObject
-): Promise<DatabaseObject[]> {
-  if (modification.biosamples_modified.length > 0) {
-    const request = new FetchRequest();
-    return requestSamples(modification.biosamples_modified, request);
-  }
-  return [];
-}
-
-/**
  * Display a CRISPR modification object page.
  * @param {string} params.id The uuid of the modification object
  */
@@ -69,7 +55,6 @@ export default async function CrisprModification({
   params,
 }: CrisprModificationProps) {
   const modification = await fetchPageObject(params.id);
-  const biosamplesModified = await fetchBiosamplesModified(modification);
 
   return (
     <>
@@ -105,8 +90,10 @@ export default async function CrisprModification({
           <DataItemValue>{modification.summary}</DataItemValue>
         </DataArea>
       </DataPanel>
-      {biosamplesModified.length > 0 && (
-        <SampleTable samples={biosamplesModified} />
+      {modification.biosamples_modified.length > 0 && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <SampleTableStreamed samplePaths={modification.biosamples_modified} />
+        </Suspense>
       )}
     </>
   );
