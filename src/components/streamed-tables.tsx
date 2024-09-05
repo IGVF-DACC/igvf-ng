@@ -1,6 +1,7 @@
 // node_modules
 import { Suspense } from "react";
 // components
+import { DataAreaTitle } from "@/components/data-area";
 import { SampleTableClient } from "@/components/sample-table";
 // lib
 import { requestBiosamples } from "@/lib/common-requests";
@@ -11,9 +12,11 @@ import { DatabaseObject } from "@/globals.d";
 /**
  * Given their paths, fetch samples from the database and display them in a table.
  * @param {string[]} samplePaths The paths to the samples to display
+ * @param {string} [title] The title of the table
  */
 async function SampleTableRetriever({
   samplePaths,
+  title = "Samples",
 }: SampleTableRetrieverProps) {
   const request = new FetchRequest();
   const samples = (await requestBiosamples(
@@ -21,11 +24,17 @@ async function SampleTableRetriever({
     request
   )) as unknown as DatabaseObject[];
 
-  return <SampleTableClient samples={samples} />;
+  return (
+    <>
+      <DataAreaTitle>{title}</DataAreaTitle>
+      <SampleTableClient samples={samples} />
+    </>
+  );
 }
 
 type SampleTableRetrieverProps = {
   samplePaths: string[];
+  title?: string;
 };
 
 /**
