@@ -1,6 +1,5 @@
 // node_modules
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 // components
 import { AliasList } from "@/components/alias-list";
 import {
@@ -9,7 +8,7 @@ import {
   DataItemValue,
   DataPanel,
 } from "@/components/data-area";
-import { SampleTableStreamed } from "@/components/sample-table-streamed";
+import { SampleTable } from "@/components/streamed-tables";
 // lib
 import { FetchRequest, type ErrorObject } from "@/lib/fetch-request";
 // root
@@ -91,9 +90,7 @@ export default async function CrisprModification({
         </DataArea>
       </DataPanel>
       {modification.biosamples_modified.length > 0 && (
-        <Suspense fallback={<div>Loading...</div>}>
-          <SampleTableStreamed samplePaths={modification.biosamples_modified} />
-        </Suspense>
+        <SampleTable samplePaths={modification.biosamples_modified} />
       )}
     </>
   );
