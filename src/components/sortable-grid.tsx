@@ -33,7 +33,7 @@ import type { DatabaseObject } from "@/globals.d";
 /**
  * Default maximum number of items to display per page in the table.
  */
-const DEFAULT_MAX_ITEMS_PER_PAGE = 5;
+const DEFAULT_MAX_ITEMS_PER_PAGE = 10;
 
 /**
  * Sorting direction for a column in the grid.

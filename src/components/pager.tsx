@@ -89,7 +89,7 @@ export function Pager({
   const pageNumberWidth = 10 + totalPages.toString().length * 10;
 
   // Called when the user clicks on a page number.
-  function pageNumberClick(pageNumber) {
+  function pageNumberClick(pageNumber: number) {
     if (pageNumber !== currentPage) {
       onClick(pageNumber);
     }
