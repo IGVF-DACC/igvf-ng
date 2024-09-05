@@ -1,3 +1,5 @@
+"use client";
+
 // node_modules
 import { motion, AnimatePresence } from "framer-motion";
 import {
