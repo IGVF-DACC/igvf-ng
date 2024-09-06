@@ -241,3 +241,44 @@ export type CollectionTitles = {
  * Use to cast a React component to a ReactNode with a key.
  */
 export type ReactNodeWithKey = React.ReactNode & { key: string };
+
+/**
+ * User object from the data provider.
+ */
+export interface UserObject extends DatabaseObject {
+  description?: string;
+  email: string;
+  first_name: string;
+  groups?: string[];
+  job_title?: string;
+  lab?: string;
+  last_name: string;
+  notes?: string;
+  submits_for?: string[];
+  submitted_by?: string;
+  submitter_comment?: string;
+  title?: string;
+  viewing_groups?: string[];
+}
+
+/**
+ * Session object from the `/session` object.
+ */
+export type SessionObject = {
+  _csrft_: string;
+  "auth.userid"?: string;
+};
+
+type SessionPropertiesAction = {
+  id: string;
+  title: string;
+  href: string;
+  notSubmittable: boolean;
+};
+
+type SessionPropertiesObject = {
+  admin: boolean;
+  "auth.userid": string;
+  user: UserObject;
+  user_actions: SessionPropertiesAction[];
+};

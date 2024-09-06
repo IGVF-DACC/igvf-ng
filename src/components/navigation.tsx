@@ -47,7 +47,7 @@ function NavExpandIcon({
       stroke="currentColor"
       data-testid={testid}
     >
-      <g className="stroke-nav-collapse fill-none stroke-1">
+      <g className="fill-none stroke-nav-collapse stroke-1">
         <path
           d="M13.1,15.5H6.9c-1.3,0-2.4-1.1-2.4-2.4V6.9c0-1.3,1.1-2.4,2.4-2.4h6.2c1.3,0,2.4,1.1,2.4,2.4v6.2
 	C15.5,14.4,14.4,15.5,13.1,15.5z"
@@ -81,7 +81,7 @@ function NavCollapseIcon({
       stroke="currentColor"
       data-testid={testid}
     >
-      <g className="stroke-nav-collapse fill-none stroke-1">
+      <g className="fill-none stroke-nav-collapse stroke-1">
         <path
           d="M13.1,15.5H6.9c-1.3,0-2.4-1.1-2.4-2.4V6.9c0-1.3,1.1-2.4,2.4-2.4h6.2c1.3,0,2.4,1.1,2.4,2.4v6.2
 	C15.5,14.4,14.4,15.5,13.1,15.5z"
