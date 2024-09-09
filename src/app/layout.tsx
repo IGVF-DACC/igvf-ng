@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { NavigationSection } from "@/components/navigation";
 // context
 import { GlobalContextProvider } from "@/context/global";
+import { SessionContextProvider } from "@/context/session";
 // styles
 import "./globals.css";
 
@@ -25,12 +26,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="md:container">
           <GlobalContextProvider>
-            <div className="md:flex">
-              <NavigationSection />
-              <div className="min-w-0 shrink grow px-3 py-2 md:px-8">
-                {children}
+            <SessionContextProvider>
+              <div className="md:flex">
+                <NavigationSection />
+                <div className="min-w-0 shrink grow px-3 py-2 md:px-8">
+                  {children}
+                </div>
               </div>
-            </div>
+            </SessionContextProvider>
           </GlobalContextProvider>
         </div>
       </body>

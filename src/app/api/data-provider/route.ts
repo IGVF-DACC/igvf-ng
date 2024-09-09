@@ -1,3 +1,4 @@
+// lib
 import { HttpStatusCode } from "@/lib/fetch-request";
 import { API_URL } from "@/lib/constants";
 
@@ -9,7 +10,7 @@ import { API_URL } from "@/lib/constants";
  * `req` and `res` are the NextJS request and response objects.
  * @returns {object} An object with the `dataProviderUrl` property set to data-provider URL.
  */
-export async function GET(): Promise<Response> {
+export async function GET() {
   const props = {
     dataProviderUrl: API_URL,
   };

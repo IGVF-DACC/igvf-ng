@@ -72,6 +72,10 @@ export function GlobalContextProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Custom hook to access the global context.
+ * @returns {GlobalContextProps} The global context for the application.
+ */
 export function useGlobalContext() {
   return useContext(GlobalContext);
 }

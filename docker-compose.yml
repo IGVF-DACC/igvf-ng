@@ -13,9 +13,10 @@ services:
     command: npm run dev
     environment:
       - NODE_ENV=development
-      - SERVER_URL=http://localhost:3000
-      - BACKEND_URL=http://nginx:8000
-      - PUBLIC_BACKEND_URL=http://localhost:8000
+      - NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+      - NEXT_PUBLIC_BACKEND_URL=http://nginx:8000
+      - NEXT_PUBLIC_PUBLIC_BACKEND_URL=http://localhost:8000
+
     ports:
       - "3001:3000"
 

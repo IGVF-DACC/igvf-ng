@@ -17,12 +17,14 @@ const nextConfig = {
     ],
   },
   serverRuntimeConfig: {
-    BACKEND_URL: process.env.BACKEND_URL || "",
+    BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || "",
   },
   publicRuntimeConfig: {
-    SERVER_URL: process.env.SERVER_URL || "",
+    SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || "",
     PUBLIC_BACKEND_URL:
-      process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "",
+      process.env.NEXT_PUBLIC_PUBLIC_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "",
     UI_VERSION,
   },
   async redirects() {

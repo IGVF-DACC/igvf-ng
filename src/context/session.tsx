@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Establishes the context to hold the back-end session and session-properties records for
  * the currently logged-in user. You have to do this within the <Auth0Provider> component so that
@@ -11,8 +13,8 @@
 
 // node_modules
 import { useAuth0 } from "@auth0/auth0-react";
-import { useRouter } from "next/router";
-import { createContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
 // components
 import { useSessionStorage } from "@/components/browser-storage";
 // lib
@@ -39,7 +41,7 @@ import type {
  * Establishes the context to hold the back-end session record for the currently signed-in user.
  * Other modules needing the session record can get it from this context.
  */
-type SessionContextType = {
+type SessionContextProps = {
   session?: SessionObject;
   sessionProperties?: SessionPropertiesObject;
   profiles?: Profiles;
@@ -48,7 +50,7 @@ type SessionContextType = {
   setAuthStageLogout?: () => void;
 };
 
-export const SessionContext = createContext<SessionContextType>({});
+export const SessionContext = createContext<SessionContextProps>({});
 
 /**
  * The current authentication stage. This is used to detect when the user has logged in or out of
@@ -66,7 +68,10 @@ type AuthStage = "login" | "logout" | "none";
  * the <Auth0Provider> context so that <Session> can access the current authentication state.
  * @param {object} authentication Authentication state and transition setter
  */
-export function Session({ authentication, children }: SessionProps) {
+export function SessionContextProvider({
+  authentication,
+  children,
+}: SessionContextProviderProps) {
   // Caches the back-end session object
   const [session, setSession] = useState<SessionObject | null>(null);
   // Caches the session-properties object
@@ -96,6 +101,7 @@ export function Session({ authentication, children }: SessionProps) {
   useEffect(() => {
     if (!dataProviderUrl) {
       getDataProviderUrl().then((url) => {
+        console.log("DATA PROVIDER URL **************", url);
         setDataProviderUrl(url!);
       });
     }
@@ -149,7 +155,7 @@ export function Session({ authentication, children }: SessionProps) {
   // sign in to igvfd here, *within* the Auth0Provider context.
   useEffect(() => {
     if (
-      authentication.authTransitionPath &&
+      authentication?.authTransitionPath &&
       authStage === "login" &&
       dataProviderUrl &&
       isAuthenticated
@@ -240,10 +246,18 @@ export function Session({ authentication, children }: SessionProps) {
   );
 }
 
-type SessionProps = {
-  authentication: {
+type SessionContextProviderProps = {
+  authentication?: {
     authTransitionPath: string;
     setAuthTransitionPath: (path: string) => void;
   };
   children: React.ReactNode;
 };
+
+/**
+ * Custom hook to access the session context.
+ * @returns {SessionContextProps} The global context for the application.
+ */
+export function useSessionContext() {
+  return useContext(SessionContext);
+}

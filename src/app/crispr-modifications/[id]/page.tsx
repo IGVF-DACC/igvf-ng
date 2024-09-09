@@ -10,6 +10,7 @@ import {
 } from "@/components/data-area";
 import { SampleTable } from "@/components/streamed-tables";
 // lib
+import { buildCookieString } from "@/lib/cookie";
 import { FetchRequest, type ErrorObject } from "@/lib/fetch-request";
 // root
 import { type DatabaseObject } from "@/globals.d";
@@ -33,7 +34,8 @@ export interface CrisprModificationObject extends DatabaseObject {
  * @returns {Promise<CrisprModificationObject>} The modification object
  */
 async function fetchPageObject(id: string): Promise<CrisprModificationObject> {
-  const request = new FetchRequest();
+  const cookie = buildCookieString();
+  const request = new FetchRequest({ cookie });
   const requestedObject = (
     await request.getObject(`/crispr-modifications/${id}/`)
   ).union() as DatabaseObject | ErrorObject;
