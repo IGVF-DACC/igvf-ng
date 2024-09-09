@@ -33,7 +33,11 @@ type GlobalContextProps = {
 };
 
 // Add more sub-objects to the global context if they make sense.
-export const GlobalContext = createContext<GlobalContextProps | null>(null);
+export const GlobalContext = createContext<GlobalContextProps>({
+  site: { title: "" },
+  linkReload: { isEnabled: false },
+  darkMode: { enabled: false },
+});
 
 /**
  * Global context provider for the entire application.

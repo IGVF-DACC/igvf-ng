@@ -28,6 +28,8 @@ import {
 } from "@/lib/authentication";
 import { getCollectionTitles } from "@/lib/collection-titles";
 import { getProfiles } from "@/lib/profiles";
+// context
+import { useAuthenticationContext } from "@/context/authentication";
 // root
 import type {
   CollectionTitles,
@@ -57,7 +59,12 @@ export const SessionContext = createContext<SessionContextProps>({});
  * Auth0 so that we can then log them in or out of igvfd. Use functions from SessionContext to set
  * this state.
  */
-type AuthStage = "login" | "logout" | "none";
+// type AuthStage = "login" | "logout" | "none";
+const enum AuthStage {
+  LOGIN = "login",
+  LOGOUT = "logout",
+  NONE = "none",
+}
 
 /**
  * This context provider reacts to the user logging in or out of Auth0 by then logging in or out of
@@ -69,7 +76,6 @@ type AuthStage = "login" | "logout" | "none";
  * @param {object} authentication Authentication state and transition setter
  */
 export function SessionContextProvider({
-  authentication,
   children,
 }: SessionContextProviderProps) {
   // Caches the back-end session object
@@ -85,10 +91,11 @@ export function SessionContextProvider({
   // Caches the data provider URL
   const [dataProviderUrl, setDataProviderUrl] = useState("");
   // Saves the current authentication stage across page loads
-  const [authStage, setAuthStage] = useSessionStorage<AuthStage>(
+  const [authStage, setAuthStage] = useSessionStorage(
     "auth-stage",
-    "none"
+    AuthStage.NONE
   );
+  const authenticationContext = useAuthenticationContext();
 
   const { getAccessTokenSilently, isAuthenticated, isLoading, logout } =
     useAuth0();
@@ -155,12 +162,12 @@ export function SessionContextProvider({
   // sign in to igvfd here, *within* the Auth0Provider context.
   useEffect(() => {
     if (
-      authentication?.authTransitionPath &&
-      authStage === "login" &&
+      authenticationContext.authTransitionPath &&
+      authStage === AuthStage.LOGIN &&
       dataProviderUrl &&
       isAuthenticated
     ) {
-      setAuthStage("none");
+      setAuthStage(AuthStage.NONE);
 
       // Get the logged-out session object from igvfd if we don't already have it in state. We
       // need this to get the CSRF token to sign into igvfd.
@@ -179,7 +186,7 @@ export function SessionContextProvider({
           ) {
             // Auth0 authenticated successfully, but we couldn't authenticate with igvfd. Log back
             // out of Auth0 and go to an error page.
-            authentication.setAuthTransitionPath("");
+            authenticationContext.setAuthTransitionPath("");
             logoutAuthProvider(logout, "/auth-error");
             return null;
           }
@@ -197,19 +204,19 @@ export function SessionContextProvider({
           // component can retrieve it without doing a request to /session. Clear the transition
           // path so we know we've completed both Auth0 and igvfd authentication.
           setSession(signedInSession);
-          authentication.setAuthTransitionPath("");
+          authenticationContext.setAuthTransitionPath("");
 
           // Auth0 might have redirected to the page the user had viewed when they signed in
           // before igvfd authentication completed, so the page shows only public data. In this
           // case, reload the page to get the latest data.
           const viewedPath = `${window.location.pathname}${window.location.search}`;
-          if (authentication.authTransitionPath === viewedPath) {
+          if (authenticationContext.authTransitionPath === viewedPath) {
             router.push(viewedPath);
           }
         });
     }
   }, [
-    authentication,
+    authenticationContext.authTransitionPath,
     dataProviderUrl,
     getAccessTokenSilently,
     authStage,
@@ -222,8 +229,8 @@ export function SessionContextProvider({
 
   useEffect(() => {
     // Detect that the user has logged out of Auth0. Respond by logging them out of igvfd.
-    if (!isAuthenticated && !isLoading && authStage === "logout") {
-      setAuthStage("none");
+    if (!isAuthenticated && !isLoading && authStage === AuthStage.LOGOUT) {
+      setAuthStage(AuthStage.NONE);
       logoutDataProvider().then(() => {
         router.push("/");
       });
@@ -237,8 +244,8 @@ export function SessionContextProvider({
         sessionProperties: sessionProperties!,
         profiles: profiles!,
         collectionTitles: collectionTitles!,
-        setAuthStageLogin: () => setAuthStage("login"),
-        setAuthStageLogout: () => setAuthStage("logout"),
+        setAuthStageLogin: () => setAuthStage(AuthStage.LOGIN),
+        setAuthStageLogout: () => setAuthStage(AuthStage.LOGOUT),
       }}
     >
       {children}
@@ -247,10 +254,6 @@ export function SessionContextProvider({
 }
 
 type SessionContextProviderProps = {
-  authentication?: {
-    authTransitionPath: string;
-    setAuthTransitionPath: (path: string) => void;
-  };
   children: React.ReactNode;
 };
 

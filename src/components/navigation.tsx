@@ -24,7 +24,7 @@ import {
   standardAnimationVariants,
 } from "@/components/animation";
 import { useSessionStorage } from "@/components/browser-storage";
-import { GlobalContext } from "@/components/global-context";
+import { GlobalContext } from "@/context/global";
 import { Icon } from "@/components/icon";
 import { SiteLogo } from "@/components/logo";
 // lib

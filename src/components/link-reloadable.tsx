@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { PropsWithChildren, useContext } from "react";
 // components
-import { GlobalContext } from "../components/global-context";
+import { GlobalContext } from "../context/global";
 
 /**
  * Wrapper for the next/link <Link> component. This wrapper has the option of reloading the browser

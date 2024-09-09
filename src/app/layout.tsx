@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 // components
 import { NavigationSection } from "@/components/navigation";
+// lib
 // context
 import { GlobalContextProvider } from "@/context/global";
 import { SessionContextProvider } from "@/context/session";
 // styles
 import "./globals.css";
+import { AuthenticationProvider } from "@/context/authentication";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,16 +27,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="md:container">
-          <GlobalContextProvider>
-            <SessionContextProvider>
-              <div className="md:flex">
-                <NavigationSection />
-                <div className="min-w-0 shrink grow px-3 py-2 md:px-8">
-                  {children}
+          <AuthenticationProvider>
+            <GlobalContextProvider>
+              <SessionContextProvider>
+                <div className="md:flex">
+                  <NavigationSection />
+                  <div className="min-w-0 shrink grow px-3 py-2 md:px-8">
+                    {children}
+                  </div>
                 </div>
-              </div>
-            </SessionContextProvider>
-          </GlobalContextProvider>
+              </SessionContextProvider>
+            </GlobalContextProvider>
+          </AuthenticationProvider>
         </div>
       </body>
     </html>
