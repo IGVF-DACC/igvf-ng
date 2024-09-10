@@ -42,9 +42,7 @@ async function fetchPageObject(id: string): Promise<CrisprModificationObject> {
   if (FetchRequest.isResponseSuccess(requestedObject)) {
     return requestedObject as CrisprModificationObject;
   }
-  if (!requestedObject) {
-    notFound();
-  }
+  notFound();
   return {} as CrisprModificationObject;
 }
 

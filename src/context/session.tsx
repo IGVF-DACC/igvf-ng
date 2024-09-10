@@ -108,7 +108,6 @@ export function SessionContextProvider({
   useEffect(() => {
     if (!dataProviderUrl) {
       getDataProviderUrl().then((url) => {
-        console.log("DATA PROVIDER URL **************", url);
         setDataProviderUrl(url!);
       });
     }

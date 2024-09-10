@@ -1,6 +1,7 @@
 "use client";
 
 // node_modules
+import { useAuth0 } from "@auth0/auth0-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bars2Icon,
@@ -24,10 +25,15 @@ import {
   standardAnimationVariants,
 } from "@/components/animation";
 import { useSessionStorage } from "@/components/browser-storage";
+import { Button } from "@/components/form-elements";
 import { GlobalContext } from "@/context/global";
 import { Icon } from "@/components/icon";
 import { SiteLogo } from "@/components/logo";
+import { Modal } from "@/components/modal";
+// context
+import { useSessionContext } from "@/context/session";
 // lib
+import { loginAuthProvider, logoutAuthProvider } from "@/lib/authentication";
 import { UC } from "../lib/constants";
 
 /**
@@ -446,6 +452,131 @@ type NavigationListProps = {
 };
 
 /**
+ * NavigationExpanded item to handle the Sign In button.
+ * @param {string} id ID of the authentication navigation item
+ * @param {boolean} isNarrowNav True if the navigation is collapsed
+ */
+function NavigationSignInItem({
+  id,
+  isNarrowNav = false,
+  children,
+}: NavigationSignInItemProps) {
+  const { isLoading, loginWithRedirect } = useAuth0();
+  const { setAuthStageLogin } = useSessionContext();
+
+  return (
+    <li>
+      <NavigationButton
+        id={id}
+        onClick={() => {
+          if (setAuthStageLogin) {
+            loginAuthProvider(loginWithRedirect).then(() => {
+              console.log("LOGGED IN");
+              setAuthStageLogin();
+            });
+          }
+        }}
+        isNarrowNav={isNarrowNav}
+        isDisabled={isLoading}
+      >
+        {children}
+      </NavigationButton>
+    </li>
+  );
+}
+
+type NavigationSignInItemProps = {
+  id: string;
+  isNarrowNav?: boolean;
+  children: React.ReactNode;
+};
+
+/**
+ * Navigation item to handle the Sign Out button. Display a model to allow the user to confirm or
+ * cancel the sign out.
+ * @param {string} id ID of the navigation item
+ * @param {boolean} isChildItem True if this item is a child of another navigation item
+ * @param {boolean} isNarrowNav True if the navigation is collapsed
+ * @param {string} className Tailwind CSS class name to add to the li element
+ */
+function NavigationSignOutItem({
+  id,
+  isChildItem = false,
+  isNarrowNav = false,
+  className = "",
+  children,
+}: NavigationSignOutItemProps) {
+  // True if sign-out warning modal open
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const { sessionProperties, setAuthStageLogout } = useSessionContext();
+  const { logout } = useAuth0();
+
+  /**
+   * Called when the user clicks the Sign Out button. Log out of both the authentication provider
+   * and the data provider.
+   */
+  function handleAuthClick() {
+    if (setAuthStageLogout) {
+      logoutAuthProvider(logout);
+      setAuthStageLogout();
+    }
+  }
+
+  return (
+    <>
+      <li className={className}>
+        <NavigationButton
+          id={id}
+          onClick={() => setIsWarningOpen(true)}
+          isNarrowNav={isNarrowNav}
+          isChildItem={isChildItem}
+        >
+          {children}
+        </NavigationButton>
+      </li>
+
+      <Modal isOpen={isWarningOpen} onClose={() => setIsWarningOpen(false)}>
+        <Modal.Header
+          onClose={() => setIsWarningOpen(false)}
+          closeLabel="Cancel signing out"
+        >
+          <h2 className="text-lg font-semibold">
+            Sign Out {sessionProperties?.user?.title || "User"}
+          </h2>
+        </Modal.Header>
+        <Modal.Body>
+          Once you sign out, you only see publicly released data.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            type="secondary"
+            onClick={() => setIsWarningOpen(false)}
+            label="Cancel signing out"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAuthClick}
+            label={`Sign out ${sessionProperties?.user?.title || "User"}`}
+            id="sign-out-confirm"
+          >
+            Sign Out
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
+
+type NavigationSignOutItemProps = {
+  id: string;
+  isChildItem?: boolean;
+  isNarrowNav?: boolean;
+  className?: string;
+  children: React.ReactNode;
+};
+
+/**
  * Renders the navigation area for mobile and desktop.
  * @param {function} navigationClick Function to call when the user clicks a navigation item
  * @param {function} toggleNavCollapsed Function to call when the user clicks the collapse button
@@ -456,6 +587,9 @@ function NavigationExpanded({
 }: NavigationExpandedProps) {
   // Holds the ids of the currently open parent navigation items
   const [openedParents, setOpenedParents] = useState<string[]>([]);
+  const { sessionProperties } = useSessionContext();
+  // Current Auth0 information
+  const { isAuthenticated } = useAuth0();
   const extraQueries = "";
 
   /**
@@ -623,6 +757,44 @@ function NavigationExpanded({
             General Help
           </NavigationHrefItem>
         </NavigationGroupItem>
+        {isAuthenticated ? (
+          <NavigationGroupItem
+            id="authenticate"
+            title={sessionProperties?.user?.title || "User"}
+            icon={<Icon.UserSignedIn />}
+            isGroupOpened={openedParents.includes("authenticate")}
+            handleGroupClick={handleParentClick}
+          >
+            <NavigationHrefItem
+              id="profile"
+              href="/user-profile"
+              navigationClick={navigationClick}
+              isChildItem
+            >
+              Profile
+            </NavigationHrefItem>
+            {sessionProperties?.admin && (
+              <NavigationHrefItem
+                id="impersonate"
+                href="/impersonate-user"
+                navigationClick={navigationClick}
+                isChildItem
+              >
+                Impersonate User
+              </NavigationHrefItem>
+            )}
+            <NavigationSignOutItem id="signout" isChildItem>
+              Sign Out
+            </NavigationSignOutItem>
+          </NavigationGroupItem>
+        ) : (
+          <NavigationSignInItem id="authenticate">
+            <NavigationIcon>
+              <Icon.UserSignedOut />
+            </NavigationIcon>
+            Sign In
+          </NavigationSignInItem>
+        )}
       </NavigationList>
     </>
   );
