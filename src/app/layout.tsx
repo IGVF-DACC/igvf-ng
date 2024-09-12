@@ -1,6 +1,5 @@
 // node_modules
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 // components
 import { DropdownPortalRoot } from "@/components/dropdown";
 import { NavigationSection } from "@/components/navigation";
@@ -10,8 +9,6 @@ import { SessionContextProvider } from "@/context/session";
 // styles
 import "./globals.css";
 import { AuthenticationProvider } from "@/context/authentication";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "IGVF",
@@ -25,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <div className="md:container">
           <AuthenticationProvider>
             <GlobalContextProvider>
