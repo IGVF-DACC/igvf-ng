@@ -1,3 +1,5 @@
+declare module "@heroicons/*";
+
 /**
  * Single audit within an audit category.
  */
@@ -43,7 +45,7 @@ export interface ObjectActions {
  */
 export interface DatabaseObject {
   "@context"?: string;
-  "@id"?: string;
+  "@id": string;
   "@type": string[];
   accession?: string;
   actions?: ObjectActions[];

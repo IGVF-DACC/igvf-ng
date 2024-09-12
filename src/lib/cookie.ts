@@ -9,7 +9,6 @@ type Cookie = {
 /**
  * Retrieve all the browser's current cookies and convert them into a single combined string of
  * cookies to use in requests from the NextJS server to the data provider.
- * @param {Cookie[]} cookie Array of cookie name/value pairs from NextJS cookie store
  * @returns {string} A string of cookie name/value pairs separated by semicolons
  */
 export function buildCookieString(): string {

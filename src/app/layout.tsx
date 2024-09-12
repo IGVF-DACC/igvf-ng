@@ -2,8 +2,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 // components
+import { DropdownPortalRoot } from "@/components/dropdown";
 import { NavigationSection } from "@/components/navigation";
-// lib
 // context
 import { GlobalContextProvider } from "@/context/global";
 import { SessionContextProvider } from "@/context/session";
@@ -40,6 +40,7 @@ export default function RootLayout({
             </GlobalContextProvider>
           </AuthenticationProvider>
         </div>
+        <DropdownPortalRoot />
       </body>
     </html>
   );
